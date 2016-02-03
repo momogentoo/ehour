@@ -1,6 +1,7 @@
 BUILDING eHour
 =====================
 
+
 IntelliJ IDEA Project
 ----------------
 - Open pom.xml in root project directory and let Maven figure out dependencies
@@ -22,8 +23,14 @@ mvn clean install -DskipTests -Pprod -Dmaven.test.skip -Dmaven.test.skip.exec
 May need options -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true if SSL certificate is self-signed
 
 
+Compatibility with orignal eHour Releases / Databases
+----------------
+Not compatible, since database table structures have been altered. 
+
+
 Testing with Tomcat
 ----------------
 0. Deploy database and initialize tables with scripts provided. Also prepare EHOUR_HOME directory as original version
 1. If war is built successfully, it could be found in eHour-web/target/, named eHour-web-1.4.3.war.
 2. Deploy war to Tomcat's webapps/ directory
+

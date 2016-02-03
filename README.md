@@ -34,6 +34,11 @@ Highlights of Changes
    Two time-stamps are recorded and stored in database. Will display on User Management Page.
    
    See demo/user_profile.png
+
+ - Allow to opt out email reminder for selected users
+  
+ Boss may need an account but won't enter hours. Weekly email reminder is unnecessary. Uncheck it in user profile editing
+
  - Several Other Changes   
    -- Modified parent pom.xml will make download of most of dependencies directly from official Maven repository. Only 1 charting module will still download from original author's repository.
 

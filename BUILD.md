@@ -28,7 +28,7 @@ Compatibility with orignal eHour Releases / Databases
 Not compatible, since database table structures have been altered. 
 
 
-Testing with Tomcat
+Deploy within Tomcat 7
 ----------------
 0. Deploy database and initialize tables with scripts provided. Also prepare EHOUR_HOME directory as original version
 1. If war is built successfully, it could be found in eHour-web/target/, named eHour-web-1.4.3.war.

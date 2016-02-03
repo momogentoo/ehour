@@ -11,7 +11,7 @@ This repository is a fork based on the [original author](https://github.com/te-c
 License
 -------------
 
-Modified source codes are released under GPL v2.0 as per the license of eHour (https://ehour.nl/about/license.phtml).
+Source codes are released under GPL v2.0 as per the license of eHour (https://ehour.nl/about/license.phtml).
 
 Highlights of Changes
 -------------
@@ -24,8 +24,13 @@ Highlights of Changes
    Password must contain at least 1 digit (0-9), 1 alphabet (a-z, A-Z) and 1 special character (~!@#$%^&+=). No spaces allowed. Min length is 8
  - Record and Display User Last Login Time and Last Password Change Time
    Two time-stamps are recorded and stored in database. Will display on User Management Page.
- - Several Other Enhancements and Bug Fixes
-   - Fix an issue in generating Excel spreadsheet that a style change to Font for a single cell will apply to all cells in workbook
+ - Several Other Changes   
+   -- Modified parent pom.xml will make download of most of dependencies directly from official Maven repository. Only 1 charting module will still download from original author's repository.
 
 
+
+Limitation
+-------------
+ - Update resource files for US/English only
+   
 ***More Details to be entered***

@@ -39,5 +39,7 @@ Highlights of Changes
 Limitation
 -------------
  - Update resource files for US/English only
+ - Update database script for MySQL only
+ - Testing. Every change is tested manually. Tried best but may skip updating test cases for limit of time.
    
 ***More Details to be entered***

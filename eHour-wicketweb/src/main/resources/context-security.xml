@@ -23,8 +23,20 @@
 				<sec:salt-source user-property="getSalt" />
 			</sec:password-encoder>
 		</sec:authentication-provider>
+		<sec:authentication-provider ref="adAuthenticationProvider">
+		</sec:authentication-provider>
 	</sec:authentication-manager>
 
 	<bean id="passwordEncoder"
 		class="org.springframework.security.authentication.encoding.ShaPasswordEncoder" />
+
+	<bean id="adAuthenticationProvider"
+		  class="org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider">
+		<constructor-arg value="domain.com" />
+		<!--<constructor-arg value="ldap://dc.domain.com:389/" />-->
+		<constructor-arg value="ldaps://dc.domain.com:636/" />
+		<property name="userDetailsContextMapper" ref="ehourUserDetailsContextMapper"/>
+		<property name="useAuthenticationRequestCredentials" value="true"/>
+	</bean>
+	<bean id="ehourUserDetailsContextMapper" class="net.rrm.ehour.ui.common.authorization.LdapUserMapper"/>
 </beans>

@@ -34,9 +34,9 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Derby database accessor methods
@@ -72,7 +72,6 @@ public class DerbyDbValidator {
             dataSource.setCreateDatabase("create");
 
             connection = dataSource.getConnection();
-            connection.setAutoCommit(false);
 
             currentVersion = getCurrentVersion(connection);
 
@@ -97,7 +96,7 @@ public class DerbyDbValidator {
                     connection.close();
                 }
             } catch (SQLException e) {
-//                LOGGER.error("Failed to close connection", e);
+                LOGGER.error("Failed to close connection", e);
             }
         }
 
@@ -124,7 +123,7 @@ public class DerbyDbValidator {
         reader.setValidateXml(false);
         reader.setUseInternalDtd(true);
 
-        Database ddlModel = reader.read(new InputStreamReader(resource.getInputStream(), "UTF-8"));
+        Database ddlModel = reader.read(new InputStreamReader(resource.getInputStream()));
 
         if (ddlType == DdlType.CREATE_TABLE) {
             platform.createTables(ddlModel, false, false);
@@ -166,7 +165,7 @@ public class DerbyDbValidator {
 
         dataReader.getSink().start();
 
-        dataIO.writeDataToDatabase(dataReader, new InputStreamReader(resource.getInputStream(), "UTF-8"));
+        dataIO.writeDataToDatabase(dataReader, new InputStreamReader(resource.getInputStream()));
     }
 
     /**
@@ -174,14 +173,23 @@ public class DerbyDbValidator {
      */
     private String getCurrentVersion(Connection connection) throws SQLException {
         String version = null;
+        Statement stmt = null;
+        ResultSet results = null;
 
-        try (PreparedStatement statement = connection.prepareStatement("SELECT config_value FROM CONFIGURATION WHERE config_key = ?")) {
-            statement.setString(1, ConfigurationItem.VERSION.getDbField());
+        try {
+            stmt = connection.createStatement();
+            results = stmt.executeQuery("SELECT config_value FROM CONFIGURATION WHERE config_key = '" + ConfigurationItem.VERSION.getDbField() + "'");
 
-            try (ResultSet results = statement.executeQuery()) {
-                if (results.next()) {
-                    version = results.getString("config_value");
-                }
+            if (results.next()) {
+                version = results.getString("config_value");
+            }
+        } finally {
+            if (results != null) {
+                results.close();
+            }
+
+            if (stmt != null) {
+                stmt.close();
             }
         }
 

@@ -12,6 +12,8 @@ import javax.annotation.PostConstruct;
  */
 @Service
 public class EhourSystemConfig {
+    private static final Logger logger = Logger.getLogger(EhourSystemConfig.class);
+
     @Value("${ehour.enableBookWholeWeek:true}")
     private boolean bookWholeWeekEnabled = true;
 

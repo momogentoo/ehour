@@ -23,12 +23,14 @@ public class CalendarDay implements Serializable
 	private static final long serialVersionUID = 1L;
 	private int monthDay;
 	private boolean booked;
+	private boolean overBooked;
 
 
-	public CalendarDay(int monthDay, boolean booked)
+	public CalendarDay(int monthDay, boolean booked, boolean overBooked)
 	{
 		this.monthDay = monthDay;
 		this.booked = booked;
+		this.overBooked = overBooked;
 	}
 
 	/**
@@ -47,4 +49,7 @@ public class CalendarDay implements Serializable
 		return booked;
 	}
 
+	public boolean isOverBooked() {
+		return overBooked;
+	}
 }

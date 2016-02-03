@@ -17,16 +17,18 @@
 package net.rrm.ehour.ui.timesheet.panel;
 
 import net.rrm.ehour.config.EhourConfig;
-import net.rrm.ehour.domain.Project;
-import net.rrm.ehour.domain.TimesheetEntry;
+import net.rrm.ehour.domain.*;
 import net.rrm.ehour.timesheet.dto.TimesheetOverview;
 import net.rrm.ehour.ui.common.border.GreyBlueRoundedBorder;
 import net.rrm.ehour.ui.common.border.GreyRoundedBorder;
 import net.rrm.ehour.ui.common.component.sort.TimesheetEntryComparator;
 import net.rrm.ehour.ui.common.model.DateModel;
+import net.rrm.ehour.ui.common.panel.calendar.CalendarPanel;
 import net.rrm.ehour.ui.common.session.EhourWebSession;
 import net.rrm.ehour.ui.common.util.HtmlUtil;
 import net.rrm.ehour.util.DateUtil;
+import net.sf.cglib.core.Local;
+import org.apache.log4j.Logger;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -37,11 +39,9 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
+import org.joda.time.LocalDate;
 
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 /**
  * Month overview panel for consultants
@@ -50,13 +50,23 @@ import java.util.List;
 public class MonthOverviewPanel extends Panel {
     private static final long serialVersionUID = -8977205040520638758L;
 
+    protected static final Logger logger = Logger.getLogger(MonthOverviewPanel.class);
+
     private final TimesheetOverview timesheetOverview;
+    private final Map<LocalDate, Map<String, CalendarException>> processedCalendarException;
+    private final User user;
     private final int thisMonth;
     private final int thisYear;
     private final Calendar overviewFor;
     private static final TimesheetEntryComparator comparator = new TimesheetEntryComparator();
+    private static final String BRACKET_NON_LOCAL_HOLIDAY_LEFT = "[";
+    private static final String BRACKET_NON_LOCAL_HOLIDAY_RIGHT = "]";
+    private static final String BRACKET_LOCAL_HOLIDAY_LEFT = "<";
+    private static final String BRACKET_LOCAL_HOLIDAY_RIGHT = ">";
 
-    public MonthOverviewPanel(String id, TimesheetOverview timesheetOverview, final Calendar overviewForMonth) {
+    public MonthOverviewPanel(String id, TimesheetOverview timesheetOverview, final Calendar overviewForMonth,
+                              final Map<LocalDate, Map<String, CalendarException>> processedCalendarException,
+                              final User user) {
         super(id);
 
         setOutputMarkupId(true);
@@ -64,6 +74,8 @@ public class MonthOverviewPanel extends Panel {
         EhourConfig config = EhourWebSession.getEhourConfig();
 
         this.timesheetOverview = timesheetOverview;
+        this.processedCalendarException = processedCalendarException;
+        this.user = user;
         thisMonth = overviewForMonth.get(Calendar.MONTH);
         thisYear = overviewForMonth.get(Calendar.YEAR);
 
@@ -109,14 +121,84 @@ public class MonthOverviewPanel extends Panel {
             String dayId = "day" + i + "Value";
 
             if (overviewFor.get(Calendar.MONTH) == thisMonth) {
-                row.add(createDay(dayId));
+                // Try to get calendar exception info
+                LocalDate localDate = new LocalDate(overviewFor.getTime());
+                Map<String, CalendarException> calendarExceptions = processedCalendarException.get(localDate);
+
+                row.add(createDay(dayId, calendarExceptions));
+
             } else {
                 row.add(createEmptyDay(dayId));
             }
         }
     }
 
-    private Fragment createDay(String dayId) {
+    /**
+     * Create a virtual TimesheetEntry to display calenar exception information
+     * @param calendarExceptions
+     * @return
+     */
+    private List<TimesheetEntry> createCalendarExceptionInfo(Map<String, CalendarException> calendarExceptions) {
+        String userCountry = user.getCountry();
+        List<TimesheetEntry> virtualTimesheetEntries = new ArrayList<>();
+
+
+        for (String countryCode : calendarExceptions.keySet()) {
+            CalendarException calendarException = calendarExceptions.get(countryCode);
+            Boolean isLocalHoliday = false;
+            int projectId = 0;
+
+            if (userCountry != null && countryCode.equalsIgnoreCase(userCountry)) {
+                isLocalHoliday = true;
+            }
+
+            /*
+                Determine brackets and prefix to use
+                Local holiday looks like  <New Year's Day>
+                Non-Local holiday looks like [US: MLK Day]
+             */
+            String effBracketLeft = isLocalHoliday ? BRACKET_LOCAL_HOLIDAY_LEFT : BRACKET_NON_LOCAL_HOLIDAY_LEFT;
+            String effBracketRight = isLocalHoliday ? BRACKET_LOCAL_HOLIDAY_RIGHT : BRACKET_NON_LOCAL_HOLIDAY_RIGHT;
+            String effCountryPrefix = isLocalHoliday ? "" : (countryCode + ": ");
+
+            String description = calendarException.getDescription();
+
+            // Add default description if not provided in table
+            if (description == null || description.length() == 0) {
+                switch (CalendarExceptionType.getCalendarExceptionTypeByValue(calendarException.getExceptionType())) {
+                    case NON_WORKING_DAY:
+                        description = effBracketLeft + effCountryPrefix + "HOLIDAY" + effBracketRight;
+                        break;
+                    case WORKING_DAY:
+                        description = effBracketLeft + effCountryPrefix + "SP. WORKING DAY" + effBracketRight;
+                        break;
+                    case NORMAL_DAY:
+                        description = effBracketLeft + effCountryPrefix + "NORMAL DAY" + effBracketRight;
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                description = effBracketLeft + effCountryPrefix + description + effBracketRight;
+            }
+
+            // Create virtual time sheet entry
+            Project virtualProject = new Project(Integer.valueOf(projectId--));
+            virtualProject.setProjectCode(description);
+
+            ProjectAssignment virtualAssignment = new ProjectAssignment();
+            virtualAssignment.setProject(virtualProject);
+
+            TimesheetEntryId entryId = new TimesheetEntryId(Calendar.getInstance().getTime(), virtualAssignment);
+            TimesheetEntry entry = new TimesheetEntry(entryId);
+
+            virtualTimesheetEntries.add(entry);
+        }
+
+        return virtualTimesheetEntries;
+    }
+
+    private Fragment createDay(String dayId, Map<String, CalendarException> calendarExceptions) {
         Fragment fragment;
 
         List<TimesheetEntry> timesheetEntries = null;
@@ -125,8 +207,8 @@ public class MonthOverviewPanel extends Panel {
             timesheetEntries = timesheetOverview.getTimesheetEntries().get(overviewFor.get(Calendar.DAY_OF_MONTH));
         }
 
-        if (timesheetEntries != null && timesheetEntries.size() > 0) {
-            fragment = createDayContents(dayId, timesheetEntries);
+        if ((calendarExceptions != null) || (timesheetEntries != null && timesheetEntries.size() > 0)) {
+            fragment = createDayContents(dayId, timesheetEntries, calendarExceptions);
         } else {
             fragment = new Fragment(dayId, "noProjects", this);
         }
@@ -139,30 +221,53 @@ public class MonthOverviewPanel extends Panel {
     }
 
     @SuppressWarnings("serial")
-    private Fragment createDayContents(String dayId, List<TimesheetEntry> timesheetEntries) {
+    private Fragment createDayContents(String dayId, List<TimesheetEntry> timesheetEntries, Map<String, CalendarException> calendarExceptions) {
         Fragment fragment;
         fragment = new Fragment(dayId, "showProjects", this);
 
+        // timesheetEntries could be null
+        if (timesheetEntries == null) {
+            timesheetEntries = new ArrayList<>();
+        }
+
+        // Insert calendar exception first
+        if (calendarExceptions != null) {
+            List<TimesheetEntry> virtualCalendarEntries = createCalendarExceptionInfo(calendarExceptions);
+            timesheetEntries.addAll(virtualCalendarEntries);
+        }
+
+
         //sort by Project Code
-        if(timesheetEntries != null)
+        if(timesheetEntries != null) {
             Collections.sort(timesheetEntries, comparator);
 
-        ListView<TimesheetEntry> projects = new ListView<TimesheetEntry>("projects", timesheetEntries) {
-            @Override
-            protected void populateItem(ListItem<TimesheetEntry> item) {
-                TimesheetEntry entry = item.getModelObject();
 
-                Project project = entry.getEntryId().getProjectAssignment().getProject();
-                Label projectCodeLabel = new Label("projectCode", project.getProjectCode());
-                projectCodeLabel.setMarkupId(String.format("prjV%d", project.getProjectId()));
-                projectCodeLabel.setOutputMarkupId(true);
+            ListView projects = new ListView<TimesheetEntry>("projects", timesheetEntries) {
+                @Override
+                protected void populateItem(ListItem<TimesheetEntry> item) {
+                    TimesheetEntry entry = item.getModelObject();
 
-                item.add(projectCodeLabel);
-                item.add(new Label("hours", new Model<Float>(entry.getHours())));
-            }
-        };
+                    Project project = entry.getEntryId().getProjectAssignment().getProject();
+                    Label projectCodeLabel = new Label("projectCode", project.getProjectCode());
+                    projectCodeLabel.setMarkupId(String.format("prjV%d", project.getProjectId()));
+                    projectCodeLabel.setOutputMarkupId(true);
 
-        fragment.add(projects);
+                    logger.debug(project.getProjectCode());
+
+                    item.add(projectCodeLabel);
+                    if (entry.getHours() != null) {
+                        item.add(new Label("hours", new Model<Float>(entry.getHours())));
+                    }
+                    else {
+                        item.add(new Label("hours", new Model<String>("")));
+                    }
+                }
+            };
+
+            fragment.add(projects);
+        }
+
+
         return fragment;
     }
 

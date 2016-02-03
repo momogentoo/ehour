@@ -24,22 +24,22 @@ public class LatestVersionFetcherHttpImpl implements LatestVersionFetcher {
 
     @Override
     public Optional<String> getLatestVersionNumber(String currentVersion, boolean isScheduled) {
-        HttpClient client = HttpClientBuilder.create().build();
-
-        try {
-            LOGGER.info("Fetching latest version number of eHour release from " + versionUrl);
-
-            HttpGet request = new HttpGet(versionUrl);
-            request.setHeader("User-Agent", String.format("%s eHour update client v%s", isScheduled ? "Scheduled" : "Bootstrap", currentVersion));
-
-            BasicResponseHandler responseHandler = new BasicResponseHandler();
-            String response = client.execute(request, responseHandler);
-
-            return Optional.of(response);
-        } catch (Exception e) {
-            LOGGER.info("Failed to retrieve latest published eHour version: " + e.getMessage());
-
-        }
+//        HttpClient client = HttpClientBuilder.create().build();
+//
+//        try {
+//            LOGGER.info("Fetching latest version number of eHour release from " + versionUrl);
+//
+//            HttpGet request = new HttpGet(versionUrl);
+//            request.setHeader("User-Agent", String.format("%s eHour update client v%s", isScheduled ? "Scheduled" : "Bootstrap", currentVersion));
+//
+//            BasicResponseHandler responseHandler = new BasicResponseHandler();
+//            String response = client.execute(request, responseHandler);
+//
+//            return Optional.of(response);
+//        } catch (Exception e) {
+//            LOGGER.info("Failed to retrieve latest published eHour version: " + e.getMessage());
+//
+//        }
 
         return Optional.absent();
     }

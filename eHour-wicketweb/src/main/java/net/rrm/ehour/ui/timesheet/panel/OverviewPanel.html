@@ -21,7 +21,12 @@
 
                 var nameE = $("#prjN" + prjId);
                 var codeC = $("#prjC" + prjId);
-                textE.text((remain >= nameE.width()) ? nameE.text() : codeC.text());
+
+                // nameE or codeC could not be found because special calendar exception does not have
+                // real project name/code
+                if ((nameE.length != 0) && (codeC.length != 0)) {
+                    textE.text((remain >= nameE.width()) ? nameE.text() : codeC.text());
+                }
             });
         }
     </script>

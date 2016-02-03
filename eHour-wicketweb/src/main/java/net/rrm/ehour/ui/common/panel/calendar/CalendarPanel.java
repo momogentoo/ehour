@@ -16,8 +16,11 @@
 
 package net.rrm.ehour.ui.common.panel.calendar;
 
+import net.rrm.ehour.calendar.service.CalendarService;
 import net.rrm.ehour.config.EhourConfig;
 import net.rrm.ehour.data.DateRange;
+import net.rrm.ehour.domain.CalendarException;
+import net.rrm.ehour.domain.CalendarExceptionType;
 import net.rrm.ehour.domain.User;
 import net.rrm.ehour.ui.common.decorator.LoadingSpinnerDecorator;
 import net.rrm.ehour.ui.common.event.AjaxEvent;
@@ -29,6 +32,7 @@ import net.rrm.ehour.ui.common.panel.sidepanel.SidePanel;
 import net.rrm.ehour.ui.common.session.EhourWebSession;
 import net.rrm.ehour.ui.common.util.HtmlUtil;
 import net.rrm.ehour.util.DateUtil;
+import org.apache.log4j.Logger;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -40,10 +44,13 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.joda.time.LocalDate;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Calendar.DAY_OF_MONTH;
 import static java.util.Calendar.DAY_OF_WEEK;
@@ -54,6 +61,7 @@ import static java.util.Calendar.DAY_OF_WEEK;
 
 public class CalendarPanel extends SidePanel {
     private static final long serialVersionUID = -7777893083323915299L;
+    protected static final Logger logger = Logger.getLogger(CalendarPanel.class);
 
     private WebMarkupContainer calendarFrame;
     private User user;
@@ -62,6 +70,9 @@ public class CalendarPanel extends SidePanel {
     private EhourConfig config;
 
     private CalendarWeekFactory calendarWeekFactory;
+
+    @SpringBean
+    private CalendarService calendarService;
 
     public CalendarPanel(String id, User user) {
         this(id, user, true);
@@ -131,6 +142,12 @@ public class CalendarPanel extends SidePanel {
 
     @SuppressWarnings("serial")
     private void addCalendarWeeks(WebMarkupContainer container, final List<CalendarWeek> weeks) {
+
+        // Load calendar exceptions according to the country code in user profile
+        List<CalendarException> calendarExceptions = calendarService.getCalendarExceptions(user.getCountry());
+        final Map<LocalDate, CalendarException> processedCalendarException = calendarService.prepCalendarExceptions(calendarExceptions);
+
+
         ListView<CalendarWeek> view = new ListView<CalendarWeek>("weeks", weeks) {
             public void populateItem(final ListItem<CalendarWeek> item) {
                 CalendarWeek week = item.getModelObject();
@@ -138,13 +155,17 @@ public class CalendarPanel extends SidePanel {
 
                 boolean isCurrentWeek = highlightWeekStartingAt != null && DateUtil.isDateWithinRange(week.getWeekStart().getTime(), highlightWeekStartingAt);
 
+
                 for (int dayInWeek = 1; dayInWeek <= 7; dayInWeek++) {
                     boolean weekend = DateUtil.isWeekend(renderDate);
 
                     int currentDay = renderDate.get(DAY_OF_WEEK);
                     CalendarDay day = week.getDay(currentDay);
 
-                    Label label = createLabel(dayInWeek, week, day, weekend);
+                    LocalDate localDate = new LocalDate(renderDate.getTime());
+                    CalendarException exceptionInfo = processedCalendarException.get(localDate);
+
+                    Label label = createLabel(dayInWeek, week, day, weekend, exceptionInfo);
                     item.add(label);
 
                     renderDate.add(Calendar.DATE, 1);
@@ -162,6 +183,9 @@ public class CalendarPanel extends SidePanel {
                 if (item.getIndex() == weeks.size() - 1) {
                     item.add(AttributeModifier.append("class", "LastWeek"));
                 }
+
+                // Override background of day for holiday and exceptional working day
+
             }
 
             private void fireWeekClicks(ListItem<CalendarWeek> item, CalendarWeek week, boolean isCurrentWeek) {
@@ -173,18 +197,49 @@ public class CalendarPanel extends SidePanel {
                 }
             }
 
-            private Label createLabel(int dayOfWeek, CalendarWeek week, CalendarDay day, boolean weekend) {
+            private Label createLabel(int dayOfWeek, CalendarWeek week, CalendarDay day, boolean weekend,
+                                      CalendarException calendarException) {
                 String id = "day" + dayOfWeek;
 
                 // when day is null the date is in the next/previous month
                 Label label = day == null ? HtmlUtil.getNbspLabel(id) : new Label(id, new PropertyModel<Integer>(day, "monthDay"));
 
+                Boolean hasCalendarException = (calendarException != null);
+                CalendarExceptionType calendarExceptionType = CalendarExceptionType.NORMAL_DAY;
+                if (hasCalendarException) {
+                    calendarExceptionType = CalendarExceptionType.getCalendarExceptionTypeByValue(calendarException.getExceptionType());
+                }
+
+
                 // determine css class
-                StringBuilder cssClass = new StringBuilder(weekend ? "WeekendDay" : "");
+                StringBuilder cssClass = new StringBuilder();
+
+                // Is it a normal day? no exception? apply appropriate style
+                switch (calendarExceptionType) {
+                    case NORMAL_DAY:
+//                        cssClass.append(weekend ? "WeekendDay" : "");
+                        break;
+                    case NON_WORKING_DAY:
+                        cssClass.append("HolidayDay");
+                        break;
+                    case WORKING_DAY:
+                        cssClass.append("ExceptionalWorkingDay");
+                        break;
+                    default:
+                        break;
+                }
+
+                cssClass.append(weekend ? " WeekendDay" : "");
 
                 // booked days are bold
                 if (day != null && day.isBooked()) {
-                    cssClass.append(" Booked");
+                    if (!day.isOverBooked()) {
+                        cssClass.append(" Booked");
+                    }
+                    else {
+                        // Mark overbooked day in RED
+                        cssClass.append(" OverBooked");
+                    }
                 }
 
                 // first day doesn't have margin-left

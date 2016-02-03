@@ -51,4 +51,7 @@ public abstract class AbstractReportModel extends LoadableDetachableModel<Report
     }
 
     protected abstract ReportData getReportData(ReportCriteria reportCriteria);
+
+    // By default, should load report config's columns, except for Matrix-style
+    public ReportColumn[] getReportColumns() { return null; }
 }

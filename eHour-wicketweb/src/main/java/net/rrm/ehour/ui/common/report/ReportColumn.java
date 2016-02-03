@@ -16,6 +16,7 @@
 
 package net.rrm.ehour.ui.common.report;
 
+import net.rrm.ehour.ui.common.report.excel.ExcelStyle;
 import net.rrm.ehour.ui.common.session.EhourWebSession;
 import org.apache.wicket.util.convert.IConverter;
 
@@ -40,6 +41,8 @@ public class ReportColumn implements Serializable {
     private List<DisplayType> displayTypes;
     private String columnHeaderResourceKey;
     private IConverter converter;
+    private String defaultColumnName;
+    private ExcelStyle overrideExcelStyle;
 
     private ColumnType columnType = ColumnType.STRING;
 
@@ -47,10 +50,17 @@ public class ReportColumn implements Serializable {
         this(columnHeaderResourceKey, ColumnType.STRING, DisplayType.VISIBLE, DisplayType.ALLOW_DUPLICATES, DisplayType.CHART_SERIES_COLUMN);
     }
 
+    public ReportColumn(String columnHeaderResourceKey, String defaultColumnName) {
+        this(columnHeaderResourceKey);
+        this.defaultColumnName = defaultColumnName;
+    }
+
     public ReportColumn(String columnHeaderResourceKey, ColumnType columnType, DisplayType... displayTypes) {
         this.columnHeaderResourceKey = columnHeaderResourceKey;
         this.displayTypes = Arrays.asList(displayTypes);
         this.columnType = columnType;
+        this.defaultColumnName = "";
+        this.overrideExcelStyle = null;
     }
 
     public ReportColumn(String columnHeaderResourceKey, ColumnType columnType, IConverter converter, DisplayType... displayTypes) {
@@ -93,4 +103,19 @@ public class ReportColumn implements Serializable {
         return displayTypes.contains(DisplayType.ALLOW_DUPLICATES);
     }
 
+    public String getDefaultColumnName() {
+        return defaultColumnName;
+    }
+
+    public void setDefaultColumnName(String defaultColumnName) {
+        this.defaultColumnName = defaultColumnName;
+    }
+
+    public ExcelStyle getOverrideExcelStyle() {
+        return overrideExcelStyle;
+    }
+
+    public void setOverrideExcelStyle(ExcelStyle overrideExcelStyle) {
+        this.overrideExcelStyle = overrideExcelStyle;
+    }
 }

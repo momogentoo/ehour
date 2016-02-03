@@ -76,12 +76,12 @@ public class Project extends DomainObject<Integer, Project> {
     @JoinColumn(name = "PROJECT_MANAGER", nullable = true)
     private User projectManager;
 
+    @Transient
+    private boolean deletable;
+
     @Column(name = "BILLABLE")
     @Type(type = "yes_no")
     private Boolean billable = Boolean.TRUE;
-
-    @Transient
-    private Double bookedHours;
 
     // Constructors
 
@@ -256,12 +256,19 @@ public class Project extends DomainObject<Integer, Project> {
      * @return the deletable
      */
     public boolean isDeletable() {
-        return !(bookedHours != null && bookedHours > 0);
+        return deletable;
+    }
+
+    /**
+     * @param deletable the deletable to set
+     */
+    public void setDeletable(boolean deletable) {
+        this.deletable = deletable;
     }
 
     public void addProjectAssignment(ProjectAssignment assignment) {
         if (projectAssignments == null) {
-            projectAssignments = new HashSet<>();
+            projectAssignments = new HashSet<ProjectAssignment>();
         }
 
         projectAssignments.add(assignment);
@@ -282,11 +289,4 @@ public class Project extends DomainObject<Integer, Project> {
         return new HashCodeBuilder().append(projectCode).append(contact).append(description).append(name).append(defaultProject).append(active).append(customer).append(billable).toHashCode();
     }
 
-    public void setBookedHours(Double bookedHours) {
-        this.bookedHours = bookedHours;
-    }
-
-    public Double getBookedHours() {
-        return bookedHours;
-    }
 }

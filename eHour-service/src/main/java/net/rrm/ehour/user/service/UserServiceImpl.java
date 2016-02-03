@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public User getUser(Integer userId) throws ObjectNotFoundException {
         User user = userDAO.findById(userId);
-        Set<ProjectAssignment> inactiveAssignments = new HashSet<>();
+        Set<ProjectAssignment> inactiveAssignments = new HashSet<ProjectAssignment>();
 
         if (user != null && user.getProjectAssignments() != null) {
             splitActiveAndInactiveAssignments(user, inactiveAssignments);
@@ -106,7 +106,7 @@ public class UserServiceImpl implements UserService {
             user.setDeletable(true);
         } else {
             // bummer, we need to check if the user booked any hours on the assignments
-            List<Integer> assignmentIds = new ArrayList<>();
+            List<Integer> assignmentIds = new ArrayList<Integer>();
 
             assignmentIds.addAll(DomainUtil.getIdsFromDomainObjects(user.getProjectAssignments()));
             assignmentIds.addAll(DomainUtil.getIdsFromDomainObjects(user.getInactiveProjectAssignments()));
@@ -194,6 +194,8 @@ public class UserServiceImpl implements UserService {
         dbUser.getUserDepartments().clear();
         dbUser.getUserDepartments().addAll(user.getUserDepartments());
         dbUser.setUsername(user.getUsername());
+        dbUser.setCountry(user.getCountry());
+        dbUser.setSendReminder(user.isSendReminderEnabled());
 
         boolean reAddPm = dbUser.getUserRoles().contains(UserRole.PROJECTMANAGER);
         dbUser.setUserRoles(user.getUserRoles());
@@ -201,6 +203,23 @@ public class UserServiceImpl implements UserService {
         if (reAddPm && !user.getUserRoles().contains(UserRole.PROJECTMANAGER)) {
             dbUser.addUserRole(UserRole.PROJECTMANAGER);
         }
+
+        userDAO.persist(dbUser);
+
+        return dbUser;
+    }
+
+    @Transactional
+    public User persistUserLastLoginTime(User user) throws ObjectNotFoundException {
+        // check username uniqueness
+        User dbUser = userDAO.findByUsername(user.getUsername());
+
+        // Already deleted? or inconsistency happened?
+        if ((dbUser == null) || (!dbUser.getUserId().equals(user.getUserId()))) {
+            throw new ObjectNotFoundException("user " + user.getUsername() + " has been changed or deleted");
+        }
+
+        dbUser.setLastLoginTime(user.getLastLoginTime() == null ? (new Date()) : user.getLastLoginTime());
 
         userDAO.persist(dbUser);
 
@@ -227,7 +246,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // encrypt password
-        user.setSalt((int) (Math.random()  * 10000));
+        user.setSalt((int) (Math.random() * 10000));
         user.setPassword(encryptPassword(password, user.getSalt()));
 
         userDAO.persist(user);
@@ -266,6 +285,9 @@ public class UserServiceImpl implements UserService {
         user.setSalt(salt);
         user.setPassword(encryptPassword(newUnencryptedPassword, salt));
 
+
+        // Set last password change time
+        user.setLastPasswordChangeTime(new Date());
         userDAO.persist(user);
     }
 

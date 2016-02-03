@@ -68,7 +68,7 @@ public class TimesheetFactory {
     private List<TimesheetDate> createTimesheetDates(List<Date> dateSequence, Collection<Date> lockedDays) {
         List<String> formattedLockedDays = formatLockedDays(lockedDays);
 
-        List<TimesheetDate> dates = new ArrayList<>();
+        List<TimesheetDate> dates = new ArrayList<TimesheetDate>();
 
         for (Date date : dateSequence) {
             Calendar calendar = DateUtil.getCalendar(config);
@@ -93,7 +93,7 @@ public class TimesheetFactory {
     }
 
     private SortedMap<Customer, List<TimesheetRow>> structureRowsPerCustomer(List<TimesheetRow> rows) {
-        SortedMap<Customer, List<TimesheetRow>> customerMap = new TreeMap<>();
+        SortedMap<Customer, List<TimesheetRow>> customerMap = new TreeMap<Customer, List<TimesheetRow>>();
 
         for (TimesheetRow timesheetRow : rows) {
             Customer customer = timesheetRow.getProjectAssignment().getProject().getCustomer();
@@ -121,7 +121,7 @@ public class TimesheetFactory {
                                                    List<TimesheetDate> timesheetDates,
                                                    List<ProjectAssignment> validProjectAssignments,
                                                    Timesheet timesheet) {
-        List<TimesheetRow> timesheetRows = new ArrayList<>();
+        List<TimesheetRow> timesheetRows = new ArrayList<TimesheetRow>();
         Calendar firstDate = DateUtil.getCalendar(config);
 
         if (timesheetDates.size() > 0) {
@@ -140,9 +140,7 @@ public class TimesheetFactory {
             for (TimesheetDate timesheetDate : timesheetDates) {
                 TimesheetEntry entry = assignmentEntry.getValue().get(timesheetDate.formatted);
 
-                boolean locked = timesheetDate.locked || !validProjectAssignments.contains(assignment);
-
-                TimesheetCell cell = new TimesheetCell(entry, locked, timesheetDate.date, assignment);
+                TimesheetCell cell = new TimesheetCell(entry, timesheetDate.locked, timesheetDate.date, assignment);
                 timesheetRow.addTimesheetCell(timesheetDate.dayInWeek, cell);
             }
 

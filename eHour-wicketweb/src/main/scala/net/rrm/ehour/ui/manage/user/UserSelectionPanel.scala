@@ -1,5 +1,6 @@
 package net.rrm.ehour.ui.manage.user
 
+import java.text.SimpleDateFormat
 import java.util
 import java.util.Collections
 
@@ -57,13 +58,18 @@ class UserSelectionPanel(id: String,
   }
 
   private def createSelectorData(users: util.List[User]): EntrySelectorData = {
+    val dateFormatter = new SimpleDateFormat
     val headers = Lists.newArrayList(new EntrySelectorData.Header("admin.user.lastName"),
                                     new EntrySelectorData.Header("admin.user.firstName"),
-                                    new EntrySelectorData.Header("admin.user.username"))
+                                    new EntrySelectorData.Header("admin.user.username"),
+                                    new EntrySelectorData.Header("admin.user.lastLoginTime"),
+                                    new EntrySelectorData.Header("admin.user.lastPasswordChangeTime"))
 
     import scala.collection.JavaConversions._
     val rows = for (user <- users) yield {
-      val cells = Lists.newArrayList(user.getLastName, user.getFirstName, user.getUsername)
+      val cells = Lists.newArrayList(user.getLastName, user.getFirstName, user.getUsername,
+        if (user.getLastLoginTime == null)  "Never" else dateFormatter.format(user.getLastLoginTime),
+        if (user.getLastPasswordChangeTime == null)  "Never" else dateFormatter.format(user.getLastPasswordChangeTime))
       new EntrySelectorData.EntrySelectorRow(cells, user.getUserId, user.isActive)
     }
 

@@ -96,6 +96,12 @@ public interface EhourConfig {
     String getSmtpPort();
 
     /**
+     * Is STARTTLS required by SMTP?
+     * @return
+     */
+    boolean enableSMTPSTARTTLS();
+
+    /**
      * In demo mode ?
      */
     boolean isInDemoMode();

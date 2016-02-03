@@ -45,6 +45,7 @@ public class EhourConfigStub implements EhourConfig, Serializable {
     private String smtpUsername;
     private String smtpPassword;
     private String smtpPort = "25";
+    private boolean smtpSTARTTLS = true;
     private int firstDayOfWeek = 1;
     private AuditType auditType;
     private String version;
@@ -207,6 +208,11 @@ public class EhourConfigStub implements EhourConfig, Serializable {
     public void setSmtpPort(String smtpPort) {
         this.smtpPort = smtpPort;
     }
+
+    @Override
+    public boolean enableSMTPSTARTTLS() { return smtpSTARTTLS; }
+
+    public void setSMTPSTARTTLS(boolean enabled) { this.smtpSTARTTLS = enabled; }
 
     @Override
     public int getFirstDayOfWeek() {

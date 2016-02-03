@@ -282,7 +282,7 @@ public class TimesheetRowList extends ListView<TimesheetRow> {
         return dayInput;
     }
 
-    public enum DayStatus {
+    public static enum DayStatus {
         OPEN,
         LOCKED,
         HIDDEN

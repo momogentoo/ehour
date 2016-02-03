@@ -6,10 +6,8 @@ import net.rrm.ehour.backup.domain.ParseSession;
 import net.rrm.ehour.backup.service.DatabaseTruncater;
 import net.rrm.ehour.config.EhourConfig;
 import net.rrm.ehour.persistence.config.dao.ConfigurationDao;
-import net.rrm.ehour.persistence.hibernate.HibernateCache;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,35 +32,26 @@ public class RestoreServiceImpl implements RestoreService {
 
     private BackupConfig backupConfig;
 
-    private TaskExecutor taskExecutor;
-
     private EhourConfig ehourConfig;
 
     @Autowired
-    public RestoreServiceImpl(ConfigurationDao configurationDao,
-                              ConfigurationParserDao configurationParserDao,
-                              EntityParserDao entityParserDao,
-                              DatabaseTruncater databaseTruncater,
-                              EhourConfig ehourConfig,
-                              BackupConfig backupConfig,
-                              TaskExecutor taskExecutor) {
+    public RestoreServiceImpl(ConfigurationDao configurationDao, ConfigurationParserDao configurationParserDao, EntityParserDao entityParserDao, DatabaseTruncater databaseTruncater, EhourConfig ehourConfig, BackupConfig backupConfig) {
         this.configurationDao = configurationDao;
         this.configurationParserDao = configurationParserDao;
         this.entityParserDao = entityParserDao;
         this.databaseTruncater = databaseTruncater;
         this.ehourConfig = ehourConfig;
         this.backupConfig = backupConfig;
-        this.taskExecutor = taskExecutor;
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = ImportException.class)
-    public void importDatabase(ParseSession session) throws ImportException {
+    public ParseSession importDatabase(ParseSession session) throws ImportException {
         try {
             if (!ehourConfig.isInDemoMode()) {
-                session.start();
-
                 databaseTruncater.truncateDatabase();
+
+                session.clearSession();
 
                 XMLEventReader xmlEventReader = BackupFileUtil.createXmlReaderFromFile(session.getFilename());
 
@@ -85,8 +74,48 @@ public class RestoreServiceImpl implements RestoreService {
         } finally {
             session.deleteFile();
             session.setImported(true);
-            session.finish();
         }
+
+        return session;
+    }
+
+    @Override
+    public ParseSession prepareImportDatabase(String xmlData) {
+        ParseSession session;
+
+        try {
+            String tempFilename = BackupFileUtil.writeToTempFile(xmlData);
+            session = validateXml(xmlData);
+            session.setFilename(tempFilename);
+        } catch (Exception e) {
+            session = new ParseSession();
+            session.setGlobalError(true);
+            session.setGlobalErrorMessage(e.getMessage());
+            LOG.error(e.getMessage(), e);
+        }
+
+        return session;
+    }
+
+    private ParseSession validateXml(String xmlData) throws Exception {
+        ParseSession status = new ParseSession();
+
+        XMLEventReader eventReader = BackupFileUtil.createXmlReader(xmlData);
+
+        EntityParserDaoValidatorImpl domainObjectParserDaoValidator = new EntityParserDaoValidatorImpl();
+        ConfigurationParserDaoValidatorImpl configurationParserDaoValidator = new ConfigurationParserDaoValidatorImpl();
+
+        XmlParser importer = new XmlParserBuilder()
+                .setConfigurationDao(configurationDao)
+                .setConfigurationParserDao(configurationParserDaoValidator)
+                .setEntityParserDao(domainObjectParserDaoValidator)
+                .setBackupConfig(backupConfig)
+                .setXmlReader(eventReader)
+                .build();
+
+        importer.parseXml(status, eventReader);
+
+        return status;
     }
 
     public void setConfigurationDao(ConfigurationDao configurationDao) {

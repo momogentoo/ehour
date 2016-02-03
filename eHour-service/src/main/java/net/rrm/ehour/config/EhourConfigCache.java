@@ -129,6 +129,11 @@ public class EhourConfigCache implements EhourConfig, Serializable {
     }
 
     @Override
+    public boolean enableSMTPSTARTTLS() {
+        return cache.enableSMTPSTARTTLS();
+    }
+
+    @Override
     public boolean isInDemoMode() {
         return cache.isInDemoMode();
     }

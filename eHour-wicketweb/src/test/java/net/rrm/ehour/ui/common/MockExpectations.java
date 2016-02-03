@@ -37,7 +37,7 @@ public abstract class MockExpectations {
     public static void navCalendar(IOverviewTimesheet iOverviewTimesheet, TestEhourWebApplication webApp) {
         LocalDate bookedDay = getDate(webApp);
 
-        when(iOverviewTimesheet.getBookedDaysMonthOverview(isNotNull(Integer.class), isNotNull(Calendar.class))).thenReturn(Arrays.asList(bookedDay));
+        when(iOverviewTimesheet.getBookedDaysMonthOverview(isNotNull(Integer.class), isNotNull(Calendar.class))[0]).thenReturn(Arrays.asList(bookedDay));
     }
 
     @SuppressWarnings("deprecation")

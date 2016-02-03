@@ -72,6 +72,13 @@
 	    timeToLiveSeconds="600"
 	    overflowToDisk="false"
 	/>
+
+	<cache name="query.Calendar"
+		   maxElementsInMemory="300"
+		   eternal="false"
+		   timeToLiveSeconds="3600"
+		   overflowToDisk="false"
+	/>
 	
 	<cache name="query.Project"
 	    maxElementsInMemory="300"

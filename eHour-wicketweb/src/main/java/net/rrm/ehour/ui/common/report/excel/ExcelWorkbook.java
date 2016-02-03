@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class ExcelWorkbook {
     private static final String FONT_NAME = "Arial";
+    private static final short FONT_SIZE = 8;
 
     private Map<ExcelStyle, CellStyle> pregeneratedStyles;
 
@@ -30,10 +31,11 @@ public class ExcelWorkbook {
 
         ExcelStyle[] styles = ExcelStyle.values();
 
-        Font font = workbook.createFont();
-        font.setFontName(FONT_NAME);
-
         for (ExcelStyle style : styles) {
+            Font font = workbook.createFont();
+            font.setFontName(FONT_NAME);
+            font.setFontHeightInPoints(FONT_SIZE);
+
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setFont(font);
 

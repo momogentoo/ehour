@@ -34,4 +34,6 @@ public interface Report extends Serializable
 	public ReportData getReportData();
 	
 	public DateRange getReportRange();
+
+	public ReportColumn[] getReportColumns();
 }

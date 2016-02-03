@@ -29,6 +29,7 @@ import org.joda.time.DateTimeZone;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +41,8 @@ import java.util.Set;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class User extends DomainObject<Integer, User> {
     private static final long serialVersionUID = 2546435367535412269L;
+    private static final String DEFAULT_USER_COUNTRY = "CN";
+    private static final Boolean DEFAULT_EMAIL_REMINDER_ENABLED = Boolean.TRUE;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -69,6 +72,19 @@ public class User extends DomainObject<Integer, User> {
 
     @Column(name = "SALT")
     private Integer salt;
+
+    @Column(name = "COUNTRY")
+    private String country = DEFAULT_USER_COUNTRY;
+
+    @Column(name = "SEND_REMINDER")
+    @Type(type = "yes_no")
+    private Boolean sendReminder = DEFAULT_EMAIL_REMINDER_ENABLED;
+
+    @Column(name = "LAST_LOGIN")
+    private Date lastLoginTime;
+
+    @Column(name = "LAST_PASSWORD_CHANGE")
+    private Date lastPasswordChangeTime;
 
     @Transient
     private String updatedPassword;
@@ -243,6 +259,13 @@ public class User extends DomainObject<Integer, User> {
         this.userRoles = userRoles;
     }
 
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
 
     /**
      * @return the active
@@ -256,6 +279,14 @@ public class User extends DomainObject<Integer, User> {
      */
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Boolean isSendReminderEnabled() {
+        return sendReminder;
+    }
+
+    public void setSendReminder(Boolean sendReminder) {
+        this.sendReminder = sendReminder;
     }
 
     /**
@@ -294,6 +325,21 @@ public class User extends DomainObject<Integer, User> {
         this.inactiveProjectAssignments = inactiveProjectAssignments;
     }
 
+    public Date getLastLoginTime() {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(Date lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
+    }
+
+    public Date getLastPasswordChangeTime() {
+        return lastPasswordChangeTime;
+    }
+
+    public void setLastPasswordChangeTime(Date lastPasswordChangeTime) {
+        this.lastPasswordChangeTime = lastPasswordChangeTime;
+    }
 
     @Override
     public Integer getPK() {
@@ -306,6 +352,9 @@ public class User extends DomainObject<Integer, User> {
                 .append("username", getUsername())
                 .append("lastName", getLastName())
                 .append("firstName", getFirstName())
+                .append("country", getCountry())
+                .append("lastLogin", getLastLoginTime())
+                .append("lastPasswordChange", getLastPasswordChangeTime())
                 .toString();
     }
 
@@ -317,6 +366,9 @@ public class User extends DomainObject<Integer, User> {
                 .append(this.getLastName(), object.getLastName())
                 .append(this.getFirstName(), object.getFirstName())
                 .append(this.getUserId(), object.getUserId())
+                .append(this.getCountry(), object.getCountry())
+                .append(this.getLastLoginTime(), object.getLastLoginTime())
+                .append(this.getLastPasswordChangeTime(), object.getLastPasswordChangeTime())
                 .toComparison();
     }
 
@@ -375,11 +427,22 @@ public class User extends DomainObject<Integer, User> {
                 .append(lastName, castOther.lastName)
                 .append(email, castOther.email)
                 .append(active, castOther.active)
+                .append(country, castOther.country)
+                .append(sendReminder, castOther.sendReminder)
+                .append(lastLoginTime, castOther.lastLoginTime)
+                .append(lastPasswordChangeTime, castOther.lastPasswordChangeTime)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(username).append(firstName).append(lastName).append(email).append(active).toHashCode();
+        return new HashCodeBuilder().append(username)
+                .append(firstName).append(lastName)
+                .append(email)
+                .append(active)
+                .append(country)
+                .append(sendReminder)
+                .append(lastLoginTime)
+                .append(lastPasswordChangeTime).toHashCode();
     }
 }

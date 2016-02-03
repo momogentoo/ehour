@@ -34,10 +34,16 @@ public abstract class TreeReportModel extends AbstractReportModel {
 
     private ReportConfig reportConfig;
 
+    /**
+     * Determine if grandTotal has been provided by report data itself or not
+     */
+    private boolean grandTotalProvided;
+
     public TreeReportModel(ReportCriteria reportCriteria, ReportConfig reportConfig) {
         super(reportCriteria);
 
         this.reportConfig = reportConfig;
+        this.grandTotalProvided = false;
     }
 
     @Override
@@ -50,7 +56,10 @@ public abstract class TreeReportModel extends AbstractReportModel {
         ReportBuilder reportBuilder = new ReportBuilder();
         List<ReportNode> rootNodes = reportBuilder.createReport(processedReportData, getReportNodeFactory());
 
-        List<TreeReportElement> matrix = createMatrix(rootNodes, reportConfig.getReportColumns().length);
+        List<TreeReportElement> matrix = createMatrix(rootNodes,
+                // for Matrix style, column is dynamic so MatrixReportModel will set appropriate column number
+                (processedReportData.getTotalReportColumns() > reportConfig.getReportColumns().length
+                        ? processedReportData.getTotalReportColumns() : reportConfig.getReportColumns().length));
         deriveTotals(rootNodes);
 
         return new TreeReportData(matrix, reportCriteria.getReportRange(), processedReportData, reportCriteria.getUserSelectedCriteria());
@@ -58,6 +67,19 @@ public abstract class TreeReportModel extends AbstractReportModel {
 
     public ReportData preprocess(ReportData reportData, ReportCriteria reportCriteria) {
         return reportData;
+    }
+
+    /**
+     * Determine if grandTotal has been provided by report data itself or not
+     *
+     * @return true or false
+     */
+    public boolean isGrandTotalProvided() {
+        return grandTotalProvided;
+    }
+
+    public void setGrandTotalProvided(boolean provided) {
+        this.grandTotalProvided = provided;
     }
 
     private ReportData getValidReportData(ReportCriteria reportCriteria) {

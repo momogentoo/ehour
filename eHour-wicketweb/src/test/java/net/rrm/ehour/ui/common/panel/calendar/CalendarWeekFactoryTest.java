@@ -55,7 +55,7 @@ public class CalendarWeekFactoryTest {
     public void should_create_weeks_for_february_2013() {
         GregorianCalendar requestedMonth = new GregorianCalendar(2013, Calendar.FEBRUARY, 1);
         LocalDate bookedDay = new LocalDate(2013, DateTimeConstants.FEBRUARY, 3);
-        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)).thenReturn(Arrays.asList(bookedDay));
+        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)[0]).thenReturn(Arrays.asList(bookedDay));
 
         List<CalendarWeek> weeks = factory.createWeeks(Calendar.MONDAY, 1, requestedMonth);
 

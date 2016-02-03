@@ -40,9 +40,9 @@ public interface IOverviewTimesheet
 	 * level). 
 	 * @param userId
 	 * @param requestedMonth
-	 * @return List with dates with fully booked dates
+	 * @return Lists with dates with fully booked dates and over booked dates
 	 */
-	List<LocalDate> getBookedDaysMonthOverview(Integer userId, Calendar requestedMonth);
+	List<LocalDate>[] getBookedDaysMonthOverview(Integer userId, Calendar requestedMonth);
 	
 	/**
 	 * Get week overview for a date. Weeknumber of supplied requested week is used

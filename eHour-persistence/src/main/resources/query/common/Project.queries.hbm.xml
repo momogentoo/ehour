@@ -2,6 +2,15 @@
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping>
+	<query name="Calendar.findAll">
+		FROM CalendarException calendar_exception
+	</query>
+
+	<query name="Calendar.findAllByCountry">
+		FROM CalendarException calendar_exception
+		WHERE country_code = :country_code
+	</query>
+
 	<query name="Customer.findAllWithActive">
 		FROM Customer customer
 	    WHERE active = :active
@@ -44,7 +53,7 @@
 		WHERE prj.projectManager = :user AND
 			  prj.active is true AND
 			  prj.customer.active is true
-	</query>
+	</query>	
 
 
 </hibernate-mapping>

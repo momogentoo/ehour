@@ -23,7 +23,7 @@ public class EntityTableParser {
         this.entityParser = entityParser;
     }
 
-    public void parseEntityTables(JoinTables joinTables, ParseSession session) throws XMLStreamException, ClassNotFoundException, ImportException, InstantiationException, IllegalAccessException {
+    public void parseEntityTables(JoinTables joinTables, ParseSession status) throws XMLStreamException, ClassNotFoundException, ImportException, InstantiationException, IllegalAccessException {
         LOG.info("Entity tables found, parsing");
 
         while (xmlReader.hasNext()) {
@@ -33,18 +33,15 @@ public class EntityTableParser {
                 break;
             }
 
-            session.eventProgressed();
-
-            parseEntity(joinTables, session, containerEvent);
+            parseEntity(joinTables, status, containerEvent);
         }
-
-        LOG.info("Entity tables parsed");
     }
 
     @SuppressWarnings("unchecked")
     private void parseEntity(JoinTables joinTables, ParseSession status, XMLEvent event) throws XMLStreamException, InstantiationException, IllegalAccessException, ClassNotFoundException, ImportException {
         StartElement element = event.asStartElement();
         Attribute attribute = element.getAttributeByName(new QName("CLASS"));
+
 
         if (attribute != null) {
             try {

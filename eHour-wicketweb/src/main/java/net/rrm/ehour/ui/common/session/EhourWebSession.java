@@ -24,11 +24,13 @@ import net.rrm.ehour.domain.Audit;
 import net.rrm.ehour.domain.AuditActionType;
 import net.rrm.ehour.domain.User;
 import net.rrm.ehour.domain.UserRole;
+import net.rrm.ehour.exception.ObjectNotFoundException;
 import net.rrm.ehour.report.criteria.UserSelectedCriteria;
 import net.rrm.ehour.security.SecurityRules;
 import net.rrm.ehour.ui.EhourWebApplication;
 import net.rrm.ehour.ui.common.authorization.AuthUser;
 import net.rrm.ehour.ui.common.util.WebUtils;
+import net.rrm.ehour.user.service.UserService;
 import net.rrm.ehour.util.DateUtil;
 import org.apache.log4j.Logger;
 import org.apache.wicket.Session;
@@ -62,6 +64,9 @@ public class EhourWebSession extends AuthenticatedWebSession {
 
     @SpringBean
     private AuditService auditService;
+
+    @SpringBean
+    private UserService userService;
 
     private Calendar navCalendar;
     private UserSelectedCriteria userSelectedCriteria;
@@ -157,6 +162,7 @@ public class EhourWebSession extends AuthenticatedWebSession {
         String u = username == null ? "" : username;
         String p = password == null ? "" : password;
 
+        // EHOUR-28 - According to current configuration, will try Active Directory and then internal table
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(u, p);
 
         // Attempt authentication.
@@ -172,19 +178,32 @@ public class EhourWebSession extends AuthenticatedWebSession {
 
             User user = ((AuthUser) authResult.getPrincipal()).getUser();
 
+            Date lastLoginTime = new Date();
+
             auditService.doAudit(new Audit()
                     .setAuditActionType(AuditActionType.LOGIN)
                     .setUser(user)
                     .setUserFullName(user.getFullName())
-                    .setDate(new Date())
+                    .setDate(lastLoginTime)
                     .setSuccess(Boolean.TRUE));
+
+            // Set last login time
+            user.setLastLoginTime(lastLoginTime);
+
+            // Try to update last login time
+            try {
+                userService.persistUserLastLoginTime(user);
+            } catch (ObjectNotFoundException e) {
+                LOGGER.info("Failed to update last login time for user '" + username + " Something is inconsistent");
+                setAuthentication(null);
+                return false;
+            }
 
             LOGGER.info("Login by user '" + username + "'.");
             return true;
 
         } catch (BadCredentialsException e) {
-            LOGGER.info("Failed to login for" +
-                    " user '" + username + "': " + e.getMessage());
+            LOGGER.info("Failed to login for user '" + username + "': " + e.getMessage());
             setAuthentication(null);
             return false;
 

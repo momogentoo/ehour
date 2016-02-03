@@ -37,6 +37,20 @@
             </tr>
 
             <tr>
+                <td valign="top"><wicket:message key="admin.user.countrycode"/>:</td>
+                <td><input type="text" class="textInputSmall" wicket:id="user.country" />
+                    <span wicket:id="countryCodeValidationError"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td valign="top"><wicket:message key="admin.user.lastLoginTime"/>:</td>
+                <td>
+                <span wicket:id="user.lastLoginTime">Show last login time</span>
+                </td>
+            </tr>
+
+            <tr>
                 <td colspan="2"><br/></td>
             </tr>
 
@@ -58,6 +72,13 @@
                 <td valign="top"><wicket:message key="user.confirmpassword"/>:</td>
                 <td><input type="password" class="textInputSmall" wicket:id="confirmPassword" autocomplete="off"/>
                     <span wicket:id="confirmPasswordValidationError"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td valign="top"><wicket:message key="admin.user.lastPasswordChangeTime"/>:</td>
+                <td>
+                    <span wicket:id="user.lastPasswordChangeTime">Show last password change time</span>
                 </td>
             </tr>
 
@@ -90,6 +111,11 @@
             <tr>
                 <td valign="top"><label for="active"><wicket:message key="admin.user.active"/></label>:</td>
                 <td><input type="checkbox" id="active" wicket:id="user.active"/></td>
+            </tr>
+
+            <tr>
+                <td valign="top"><label for="emailreminder"><wicket:message key="admin.user.emailReminder"/></label>:</td>
+                <td><input type="checkbox" id="emailreminder" wicket:id="user.sendReminder"/></td>
             </tr>
 
             <tr>

@@ -66,7 +66,7 @@ public class CalendarPanelTest extends BaseSpringWebAppTester {
 
         session.setNavCalendar(requestedMonth);
 
-        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)).thenReturn(generateBookDays());
+        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)[0]).thenReturn(generateBookDays());
 
         startPanel();
 
@@ -92,7 +92,7 @@ public class CalendarPanelTest extends BaseSpringWebAppTester {
         EhourWebSession session = getWebApp().getSession();
         session.setNavCalendar(requestedMonth);
 
-        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)).thenReturn(generateBookDays());
+        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)[0]).thenReturn(generateBookDays());
 
         startPanel();
 
@@ -110,10 +110,10 @@ public class CalendarPanelTest extends BaseSpringWebAppTester {
 
         List<LocalDate> bookedDays = generateBookDays();
 
-        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth))
+        when(overviewTimesheet.getBookedDaysMonthOverview(1, requestedMonth)[0])
                 .thenReturn(bookedDays);
 
-        when(overviewTimesheet.getBookedDaysMonthOverview(1, nextMonth))
+        when(overviewTimesheet.getBookedDaysMonthOverview(1, nextMonth)[0])
                 .thenReturn(bookedDays);
 
         startPanel();

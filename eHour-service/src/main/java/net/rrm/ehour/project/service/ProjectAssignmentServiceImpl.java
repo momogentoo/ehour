@@ -57,7 +57,7 @@ public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
         List<ProjectAssignment> assignments;
         List<ProjectAssignment> validAssignments = new ArrayList<>();
 
-        assignments = projectAssignmentDAO.findActiveProjectAssignmentsForUser(userId, dateRange);
+        assignments = projectAssignmentDAO.findProjectAssignmentsForUser(userId, dateRange);
 
         for (ProjectAssignment assignment : assignments) {
             if (projectAssignmentStatusService.getAssignmentStatus(assignment, dateRange).isAssignmentBookable()) {
@@ -71,7 +71,7 @@ public class ProjectAssignmentServiceImpl implements ProjectAssignmentService {
     @Override
     @Transactional(readOnly = true)
     public List<ProjectAssignment> getProjectAssignmentsForUser(User user) {
-        return projectAssignmentDAO.findAllProjectAssignmentsForUser(user);
+        return projectAssignmentDAO.findProjectAssignmentsForUser(user);
     }
 
     @Override

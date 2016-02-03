@@ -36,7 +36,10 @@ import org.apache.wicket.validation.ValidationError;
 import org.apache.wicket.validation.validator.EmailAddressValidator;
 import org.apache.wicket.validation.validator.StringValidator;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static net.rrm.ehour.ui.manage.user.UserManageAjaxEventType.*;
@@ -45,6 +48,7 @@ public class UserFormPanel<T extends UserManageBackingBean> extends AbstractForm
     private static final long serialVersionUID = -7427807216389657732L;
     private static final String BORDER = "border";
     private static final String FORM = "userForm";
+    private static final SimpleDateFormat datetimeFormatter = (SimpleDateFormat)SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.FULL, SimpleDateFormat.FULL);
 
     @SpringBean
     private UserService userService;
@@ -75,16 +79,21 @@ public class UserFormPanel<T extends UserManageBackingBean> extends AbstractForm
         createUsernameInput(form);
         createNameInput(form);
         createMailInput(form);
+        createCountryCodeInput(form);
         createPasswordInput(userModel, manageUserBackingBean, form);
         createDepartmentInput(form);
         createRoleInput(form);
         createActiveInput(form);
+        createEmailReminderInput(form);
 
         // show assignments
         CheckBox showAssignments = new CheckBox("showAssignments");
         showAssignments.setMarkupId("showAssignments");
         showAssignments.setVisible(!manageUserBackingBean.isEditMode());
         form.add(showAssignments);
+
+        displayLastLoginTime(form, user);
+        displayLastPasswordChangeTime(form, user);
 
 
         // data save label
@@ -105,10 +114,28 @@ public class UserFormPanel<T extends UserManageBackingBean> extends AbstractForm
         onFormCreated(form);
     }
 
+    private void displayLastLoginTime(Form<T> form, User user) {
+        form.add(new Label("admin.user.lastLoginTime", new ResourceModel("admin.user.lastLoginTime")));
+        Date lastLoginTime = user.getLastLoginTime();
+        form.add(new Label("user.lastLoginTime", lastLoginTime == null ? "Never Login" : datetimeFormatter.format(lastLoginTime)));
+    }
+
+    private void displayLastPasswordChangeTime(Form<T> form, User user) {
+        form.add(new Label("admin.user.lastPasswordChangeTime", new ResourceModel("admin.user.lastPasswordChangeTime")));
+        Date lastPasswordChangeTime = user.getLastPasswordChangeTime();
+        form.add(new Label("user.lastPasswordChangeTime", lastPasswordChangeTime == null ? "Never Change Password" : datetimeFormatter.format(lastPasswordChangeTime)));
+    }
+
     private void createActiveInput(Form<T> form) {
         CheckBox activeCheckbox = new CheckBox("user.active");
         activeCheckbox.setMarkupId("active");
         form.add(activeCheckbox);
+    }
+
+    private void createEmailReminderInput(Form<T> form) {
+        CheckBox reminderCheckbox = new CheckBox("user.sendReminder");
+        reminderCheckbox.setMarkupId("emailreminder");
+        form.add(reminderCheckbox);
     }
 
     private void createRoleInput(Form<T> form) {
@@ -147,6 +174,15 @@ public class UserFormPanel<T extends UserManageBackingBean> extends AbstractForm
         emailField.add(new ValidatingFormComponentAjaxBehavior());
         form.add(emailField);
         form.add(new AjaxFormComponentFeedbackIndicator("emailValidationError", emailField));
+    }
+
+    private void createCountryCodeInput(Form<T> form) {
+        TextField<String> countryCodeField = new TextField<String>("user.country");
+        countryCodeField.add(CountryCodeValidator.getInstance());
+        countryCodeField.add(new ValidatingFormComponentAjaxBehavior());
+        countryCodeField.setLabel(new ResourceModel("admin.user.countrycode"));
+        form.add(countryCodeField);
+        form.add(new AjaxFormComponentFeedbackIndicator("countryCodeValidationError", countryCodeField));
     }
 
     private void createNameInput(Form<T> form) {

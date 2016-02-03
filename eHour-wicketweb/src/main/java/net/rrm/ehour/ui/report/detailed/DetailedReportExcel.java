@@ -44,4 +44,5 @@ public class DetailedReportExcel extends AbstractExcelReport {
     protected IModel<String> getHeaderReportName() {
         return new ResourceModel("report.title.detailed");
     }
+
 }

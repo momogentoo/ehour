@@ -160,17 +160,16 @@ public class ReportCriteriaPanel extends AbstractAjaxPanel<ReportCriteriaBacking
                 @Override
                 protected void onUpdate(AjaxRequestTarget target) {
                     ReportType type = choice.getModelObject();
-                    User user = EhourWebSession.getUser();
                     switch (type) {
                         case REPORT:
                             criteria.setReportTypeToGlobal();
                             break;
                         case PM:
-                            criteria.setReportTypeToPM(user);
+                            criteria.setReportTypeToPM(EhourWebSession.getUser());
                             break;
                         case INDIVIDUAL_USER:
                         default:
-                            criteria.setReportTypeToIndividualUser(user);
+                            criteria.setReportTypeToIndividualUser(EhourWebSession.getUser());
                             break;
                     }
 
@@ -274,7 +273,7 @@ public class ReportCriteriaPanel extends AbstractAjaxPanel<ReportCriteriaBacking
     }
 
     private DropDownChoice<Sort> createCustomerSort() {
-        DropDownChoice<Sort> customerSort = new DropDownChoice<>("customerSort", new PropertyModel<Sort>(getPanelModelObject(), "reportCriteria.userSelectedCriteria.customerSort"), Arrays.asList(Sort.NAME, Sort.CODE), new SortRenderer());
+        DropDownChoice<Sort> customerSort = new DropDownChoice<>("customerSort", new PropertyModel<Sort>(getPanelModelObject(), "reportCriteria.userSelectedCriteria.customerSort"), Arrays.asList(Sort.values()), new SortRenderer());
         customerSort.add(new AjaxFormComponentUpdatingBehavior("change") {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
@@ -354,7 +353,7 @@ public class ReportCriteriaPanel extends AbstractAjaxPanel<ReportCriteriaBacking
     }
 
     private DropDownChoice<Sort> createProjectSort() {
-        DropDownChoice<Sort> projectSort = new DropDownChoice<>("projectSort", new PropertyModel<Sort>(getPanelModelObject(), "reportCriteria.userSelectedCriteria.projectSort"), Arrays.asList(Sort.NAME, Sort.CODE), new SortRenderer());
+        DropDownChoice<Sort> projectSort = new DropDownChoice<>("projectSort", new PropertyModel<Sort>(getPanelModelObject(), "reportCriteria.userSelectedCriteria.projectSort"), Arrays.asList(Sort.values()), new SortRenderer());
         projectSort.add(new AjaxFormComponentUpdatingBehavior("change") {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
@@ -661,9 +660,9 @@ public class ReportCriteriaPanel extends AbstractAjaxPanel<ReportCriteriaBacking
 
     private WebMarkupContainer createQuickMonth() {
         List<QuickMonth> months = new ArrayList<>();
-
         Calendar currentDate = new GregorianCalendar();
-        currentDate.set(Calendar.DAY_OF_MONTH, 1);
+        currentDate.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+        currentDate.setFirstDayOfWeek(Calendar.SUNDAY);
 
         currentDate.add(Calendar.MONTH, -1); //previous
         months.add(QuickMonth.shortcut(currentDate, SHORTCUT_PREV));

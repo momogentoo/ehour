@@ -27,7 +27,7 @@ public class CalendarWeekFactory implements Serializable {
         List<CalendarWeek> calendarWeeks = new ArrayList<CalendarWeek>();
         thisMonth.setFirstDayOfWeek(firstDayOfWeek);
 
-        List<LocalDate> bookedDays = getOverviewTimesheet().getBookedDaysMonthOverview(userId, thisMonth);
+        List<LocalDate> []bookedDays = getOverviewTimesheet().getBookedDaysMonthOverview(userId, thisMonth);
 
         thisMonth.set(Calendar.DAY_OF_MONTH, 1);
 
@@ -57,9 +57,10 @@ public class CalendarWeekFactory implements Serializable {
             int dayInMonth = thisMonth.get(Calendar.DAY_OF_MONTH);
             int dayInWeek = thisMonth.get(Calendar.DAY_OF_WEEK);
 
-            boolean isBooked = bookedDays.contains(thisMonthLocal.withDayOfMonth(dayInMonth));
+            boolean isBooked = bookedDays[0].contains(thisMonthLocal.withDayOfMonth(dayInMonth));
+            boolean isOverBooked = bookedDays[1].contains(thisMonthLocal.withDayOfMonth(dayInMonth));
 
-            CalendarDay day = new CalendarDay(dayInMonth, isBooked);
+            CalendarDay day = new CalendarDay(dayInMonth, isBooked, isOverBooked);
 
             week.addDayInWeek(dayInWeek, day);
 

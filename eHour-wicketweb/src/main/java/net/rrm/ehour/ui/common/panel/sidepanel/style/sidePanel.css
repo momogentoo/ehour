@@ -107,6 +107,21 @@ div.Calendar div.CalendarHeader div.CurrentMonth {
     font-weight: bold;
 }
 
+.Calendar .OverBooked {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.Calendar .HolidayDay {
+    color: #98988d;
+    text-decoration: line-through;
+}
+
+.Calendar .ExceptionalWorkingDay {
+    color: #ef0d0d;
+    text-decoration: underline;
+}
+
 .Calendar .FirstDay {
     border: 0 !important;
 }

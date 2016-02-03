@@ -13,6 +13,4 @@ trait RestoreDao {
   def flush()
 
   def delete[T](obj: Class[T])
-
-  def clearCache
 }

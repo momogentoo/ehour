@@ -26,26 +26,22 @@ public class XmlParser {
         this.ctx = ctx;
     }
 
-    public void parseXml(final ParseSession session, final XMLEventReader eventReader) throws Exception {
+    public void parseXml(final ParseSession status, final XMLEventReader eventReader) throws Exception {
         JoinTables joinTables = new JoinTables();
 
-        session.start();
-
         while (eventReader.hasNext()) {
-            session.eventProgressed();
             final XMLEvent event = eventReader.nextTag();
 
             if (event.isStartElement()) {
-                parseEvent(session, eventReader, event, joinTables);
+                parseEvent(status, eventReader, event, joinTables);
+
             } else if (event.isEndDocument() || event.isEndElement()) {
                 break;
             }
         }
-
-        session.finish();
     }
 
-    private void parseEvent(ParseSession session, XMLEventReader eventReader, XMLEvent event, JoinTables joinTables)
+    private void parseEvent(ParseSession status, XMLEventReader eventReader, XMLEvent event, JoinTables joinTables)
             throws ImportException, XMLStreamException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         StartElement startElement = event.asStartElement();
 
@@ -68,7 +64,7 @@ public class XmlParser {
                 parseJoinTables(joinTables);
                 break;
             case ENTITY_TABLES:
-                parseEntityTables(joinTables, session);
+                parseEntityTables(joinTables, status);
                 break;
             default:
                 break;
@@ -87,8 +83,8 @@ public class XmlParser {
         return ctx.joinTableParser.parseJoinTables(joinTables);
     }
 
-    private void parseEntityTables(JoinTables joinTables, ParseSession session) throws XMLStreamException, ClassNotFoundException, ImportException, InstantiationException, IllegalAccessException {
-        ctx.entityTableParser.parseEntityTables(joinTables, session);
+    private void parseEntityTables(JoinTables joinTables, ParseSession status) throws XMLStreamException, ClassNotFoundException, ImportException, InstantiationException, IllegalAccessException {
+        ctx.entityTableParser.parseEntityTables(joinTables, status);
     }
 
     private void checkDatabaseVersion(StartElement element) throws ImportException {

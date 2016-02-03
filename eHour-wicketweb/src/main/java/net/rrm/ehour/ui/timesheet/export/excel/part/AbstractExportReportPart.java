@@ -25,6 +25,7 @@ import net.rrm.ehour.ui.common.session.EhourWebSession;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -58,7 +59,7 @@ public abstract class AbstractExportReportPart
 	{
 		config = EhourWebSession.getEhourConfig();
 		Locale locale = config.getFormattingLocale();
-		formatter = new SimpleDateFormat("dd MMM yy", locale);
+		formatter = (SimpleDateFormat) SimpleDateFormat.getDateInstance(DateFormat.MEDIUM, locale);
 	}
 
 	protected int getCellMargin()

@@ -1,23 +1,46 @@
 package net.rrm.ehour.ui.common.report.excel;
 
 import net.rrm.ehour.ui.common.session.EhourWebSession;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.*;
 
 import java.util.Currency;
 import java.util.Locale;
 
+/**
+ * Define Excel Column Style like date format, number format
+ */
 public enum ExcelStyle {
-    NORMAL_FONT,
+    NORMAL_FONT {
+        @Override
+        public void apply(Workbook workbook, CellStyle cellStyle, Font font) {
+            font.setFontHeightInPoints((short) 8);
+            font.setBold(false);
+            font.setBoldweight(Font.BOLDWEIGHT_NORMAL);
+        }
+    },
+
     BOLD_FONT {
         @Override
         public void apply(Workbook workbook, CellStyle cellStyle, Font font) {
+            font.setFontHeightInPoints((short) 8);
             font.setBoldweight(Font.BOLDWEIGHT_BOLD);
         }
     },
+
+    WEEKEND_FONT {
+        @Override
+        public void apply(Workbook workbook, CellStyle cellStyle, Font font) {
+            HEADER.apply(workbook,cellStyle,font);
+            font.setColor(HSSFColor.RED.index);
+        }
+    },
+
     DATE {
         @Override
         public void apply(Workbook workbook, CellStyle cellStyle, Font font) {
-            cellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat("d-mmm-yy"));
+            NORMAL_FONT.apply(workbook, cellStyle, font);
+            cellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat("mm/dd/yy"));
         }
     },
     BOLD_DATE {
@@ -30,6 +53,7 @@ public enum ExcelStyle {
     DIGIT {
         @Override
         public void apply(Workbook workbook, CellStyle cellStyle, Font font) {
+            NORMAL_FONT.apply(workbook, cellStyle, font);
             cellStyle.setDataFormat((short) 2);
         }
     },
@@ -119,8 +143,8 @@ public enum ExcelStyle {
             BOLD_FONT.apply(workbook, cellStyle, font);
             BORDER_SOUTH.apply(workbook, cellStyle, font);
 
-            cellStyle.setFillForegroundColor(IndexedColors.BLUE.index);
-            cellStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+//            cellStyle.setFillForegroundColor(IndexedColors.BLUE.index);
+//            cellStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
         }
     };
 

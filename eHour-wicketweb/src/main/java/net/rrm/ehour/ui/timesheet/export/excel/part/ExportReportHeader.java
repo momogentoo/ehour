@@ -27,11 +27,10 @@ import net.rrm.ehour.ui.common.report.excel.CellFactory;
 import net.rrm.ehour.ui.common.report.excel.ExcelWorkbook;
 import net.rrm.ehour.ui.common.session.EhourWebSession;
 import net.rrm.ehour.ui.common.util.WebUtils;
-import org.apache.poi.ss.usermodel.ClientAnchor;
-import org.apache.poi.ss.usermodel.Drawing;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFShape;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
@@ -45,6 +44,9 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  */
 public class ExportReportHeader extends AbstractExportReportPart
 {
+//    private static final Logger logger = Logger.getLogger(ExportReportHeader.class);
+    private static final int BLANK_ROWS_AFTER_LOGO = 2;
+
     @SpringBean(name = "configurationService")
     private ConfigurationService configurationService;
 
@@ -76,14 +78,20 @@ public class ExportReportHeader extends AbstractExportReportPart
         byte[] image = excelLogo.getImageData();
 
         int index = getWorkbook().addPicture(image, PoiUtil.getImageType(excelLogo.getImageType()));
+        CreationHelper helper = getWorkbook().getCreationHelper();
+//        ClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, (short) 1, 0, (short) 8, 7);
+        ClientAnchor anchor = helper.createClientAnchor();
 
-        ClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, (short) 1, 0, (short) 8, 7);
+        anchor.setCol1(1);
+        anchor.setRow1(1);
 
         Drawing patriarch = getSheet().createDrawingPatriarch();
-        patriarch.createPicture(anchor, index);
-        anchor.setAnchorType(0); // 0 = Move and size with Cells, 2 = Move but don't size with cells, 3 = Don't move or size with cells.
+        Picture picture = patriarch.createPicture(anchor, index);
+        picture.resize();
+//        anchor.setAnchorType(ClientAnchor.MOVE_DONT_RESIZE); // 0 = Move and size with Cells, 2 = Move but don't size with cells, 3 = Don't move or size with cells.
 
-        return rowNumber;
+        // Return dynamic row number according to best logo size
+        return rowNumber + anchor.getRow2() + BLANK_ROWS_AFTER_LOGO;
     }
 
 

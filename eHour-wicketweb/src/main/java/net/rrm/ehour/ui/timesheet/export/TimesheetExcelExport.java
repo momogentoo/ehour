@@ -64,7 +64,7 @@ public class TimesheetExcelExport implements ExcelReport {
         sheet.autoSizeColumn((short) (CELL_BORDER + ExportReportColumn.HOURS.getColumn()));
         sheet.setColumnWidth(0, 1024);
 
-        int rowNumber = 9;
+        int rowNumber = 0;
 
         rowNumber = new ExportReportHeader(CELL_BORDER, sheet, report, workbook).createPart(rowNumber);
         rowNumber = new ExportReportBodyHeader(CELL_BORDER, sheet, report, workbook).createPart(rowNumber);

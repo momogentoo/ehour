@@ -19,10 +19,8 @@ package net.rrm.ehour.ui.admin.config.panel;
 
 import net.rrm.ehour.domain.AuditType;
 import net.rrm.ehour.ui.admin.config.MainConfigBackingBean;
-import net.rrm.ehour.ui.common.model.MessageResourceModel;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
-import org.apache.wicket.markup.html.form.IChoiceRenderer;
 import org.apache.wicket.model.IModel;
 
 import java.util.Arrays;
@@ -41,16 +39,6 @@ public class AuditConfigPanel extends AbstractConfigPanel {
 
     @Override
     protected void addFormComponents(Form<?> configForm) {
-        configForm.add(new DropDownChoice<>("config.auditType", Arrays.asList(AuditType.values()), new IChoiceRenderer<AuditType>() {
-            @Override
-            public Object getDisplayValue(AuditType object) {
-                return new MessageResourceModel("admin.config.audit." + object.name().toLowerCase(), AuditConfigPanel.this).getObject();
-            }
-
-            @Override
-            public String getIdValue(AuditType object, int index) {
-                return Integer.toString(index);
-            }
-        }));
+        configForm.add(new DropDownChoice<AuditType>("config.auditType", Arrays.asList(AuditType.values())));
     }
 }

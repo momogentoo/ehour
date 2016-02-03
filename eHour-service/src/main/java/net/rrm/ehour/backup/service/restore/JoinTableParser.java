@@ -34,8 +34,6 @@ public class JoinTableParser {
             parseJoinTable(joinTables);
         }
 
-        LOG.info("Join tables parsed");
-
         return joinTables;
     }
 

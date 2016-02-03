@@ -36,6 +36,7 @@ import net.rrm.ehour.ui.report.model.TreeReportDataProvider;
 import net.rrm.ehour.ui.report.model.TreeReportElement;
 import net.rrm.ehour.ui.report.model.TreeReportModel;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
@@ -70,11 +71,13 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
     private static final String REPORT_TABLE_ID = "reportTable";
     private static final String NAVIGATOR_ID = "navigator";
 
+    protected static final Logger logger = Logger.getLogger(TreeReportDataPanel.class);
+
     private ReportConfig reportConfig;
     private UserSelectedCriteria criteria;
     private HoverPagingNavigator pagingNavigator;
     private Container reportFrameContainer;
-    private Fragment reportFragment;
+    private TreeReportModel reportModel;
 
     public TreeReportDataPanel(String id,
                                TreeReportModel reportModel,
@@ -84,6 +87,7 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
         setOutputMarkupId(true);
 
         this.reportConfig = reportConfig;
+        this.reportModel = reportModel;
         criteria = reportModel.getReportCriteria().getUserSelectedCriteria();
 
         Border outerFrame = new GreyReportBorder("greyFrame");
@@ -119,16 +123,16 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
     }
 
     private Fragment withDataReport(String id, final TreeReportModel reportModel, final ExcelReport excelReport) {
-        reportFragment = new Fragment(id, "withDataReport", this);
+        Fragment fragment = new Fragment(id, "withDataReport", this);
 
-        reportFragment.add(createExcelLink(excelReport));
+        fragment.add(createExcelLink(excelReport));
 
-        reportFragment.add(createZeroBookingSelector("reportOptionsPlaceholder"));
-        reportFragment.add(createAdditionalOptions("additionalOptions"));
+        fragment.add(createZeroBookingSelector("reportOptionsPlaceholder"));
+        fragment.add(createAdditionalOptions("additionalOptions"));
 
-        createReportTableContainer(reportModel, reportFragment);
+        createReportTableContainer(reportModel, fragment);
 
-        return reportFragment;
+        return fragment;
     }
 
     private void createReportTableContainer(TreeReportModel reportModel, MarkupContainer parent) {
@@ -150,6 +154,7 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
         DataView<TreeReportElement> dataView = createDataView(reportModel);
         reportFrameContainer.add(dataView);
         reportFrameContainer.add(addGrandTotal("cell", reportModel));
+
 
         pagingNavigator = createNav(dataView);
         parent.addOrReplace(pagingNavigator);
@@ -182,8 +187,10 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
 
         reportConfig = aggregateByChangedEvent.getReportConfig();
 
-        createReportTableContainer((TreeReportModel) getPanelModel(), reportFragment);
-        aggregateByChangedEvent.target().add(reportFragment);
+        if (pagingNavigator != null) {
+            createReportTableContainer((TreeReportModel) getPanelModel(), pagingNavigator.getParent());
+            aggregateByChangedEvent.target().add(pagingNavigator.getParent());
+        }
     }
 
     private void updateDataTableForZeroBookingSelectionChange(IEvent<?> event) {
@@ -220,35 +227,65 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
         }
     }
 
+    /**
+     * Determine if GrandTotal should display at bottom
+     * <br/>
+     * DetailedMatrixModel does not need this class to re-calculate grand total
+     *
+     * @return
+     */
+    private boolean shouldShowGrandTotal() {
+        return !reportModel.isGrandTotalProvided();
+    }
+
+    /**
+     * Get Effective Columns Configuration
+     * <br/>
+     * DetailedMatrixModel may provide dynamic columns
+     *
+     * @return
+     */
+    private ReportColumn []getReportColumns() {
+        ReportColumn []reportColumns = reportModel.getReportColumns();
+        if (reportColumns == null) {
+            reportColumns = reportConfig.getReportColumns();
+        }
+
+        return reportColumns;
+    }
+
     private RepeatingView addGrandTotal(String id, TreeReportModel reportModel) {
         RepeatingView totalView = new RepeatingView(id);
 
-        // add cells
-        for (ReportColumn column : reportConfig.getReportColumns()) {
-            if (column.isVisible()) {
-                Label label;
+        if (shouldShowGrandTotal()) {
 
-                String childId = totalView.newChildId();
+            // add cells
+            for (ReportColumn column : getReportColumns()) {
+                if (column.isVisible()) {
+                    Label label;
 
-                switch (column.getColumnType()) {
-                    case HOUR:
-                        label = new Label(childId, new Model<>(reportModel.getTotalHours()));
-                        break;
-                    case TURNOVER:
-                        label = new CurrencyLabel(childId, reportModel.getTotalTurnover());
-                        label.setEscapeModelStrings(false);
-                        break;
-                    default:
-                        label = HtmlUtil.getNbspLabel(childId);
-                        break;
+                    String childId = totalView.newChildId();
+
+                    switch (column.getColumnType()) {
+                        case HOUR:
+                            label = new Label(childId, new Model<>(reportModel.getTotalHours()));
+                            break;
+                        case TURNOVER:
+                            label = new CurrencyLabel(childId, reportModel.getTotalTurnover());
+                            label.setEscapeModelStrings(false);
+                            break;
+                        default:
+                            label = HtmlUtil.getNbspLabel(childId);
+                            break;
+                    }
+
+                    Optional<String> optionalClass = addColumnTypeStyling(column.getColumnType());
+                    if (optionalClass.isPresent()) {
+                        label.add(AttributeModifier.append("class", optionalClass.get()));
+                    }
+
+                    totalView.add(label);
                 }
-
-                Optional<String> optionalClass = addColumnTypeStyling(column.getColumnType());
-                if (optionalClass.isPresent()) {
-                    label.add(AttributeModifier.append("class", optionalClass.get()));
-                }
-
-                totalView.add(label);
             }
         }
 
@@ -270,8 +307,10 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
     private RepeatingView addHeaderColumns(String id) {
         RepeatingView columnHeaders = new RepeatingView(id);
 
-        for (ReportColumn reportColumn : reportConfig.getReportColumns()) {
-            Label columnHeader = new Label(columnHeaders.newChildId(), new ResourceModel(reportColumn.getColumnHeaderResourceKey()));
+        for (ReportColumn reportColumn : getReportColumns()) {
+            Label columnHeader = new Label(columnHeaders.newChildId(),
+                    new ResourceModel(reportColumn.getColumnHeaderResourceKey(),
+                            reportColumn.getDefaultColumnName())); // Matrix-style uses default column name
             columnHeader.setVisible(reportColumn.isVisible());
             columnHeaders.add(columnHeader);
 
@@ -322,7 +361,7 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
             for (final Serializable cellValue : row.getRow()) {
                 thisCellValues.add(cellValue);
 
-                ReportColumn reportColumn = reportConfig.getReportColumns()[column];
+                ReportColumn reportColumn = getReportColumns()[column];
 
                 if (reportColumn.isVisible()) {
                     List<String> cssClasses = new ArrayList<>();
@@ -415,7 +454,7 @@ public class TreeReportDataPanel extends AbstractBasePanel<ReportData> {
         }
 
         private boolean isDuplicate(int i, Serializable cellValue) {
-            return (!reportConfig.getReportColumns()[i].isAllowDuplicates()
+            return (!getReportColumns()[i].isAllowDuplicates()
                     && previousCellValues != null
                     && previousForPage == getCurrentPage()
                     && previousCellValues.get(i) != null

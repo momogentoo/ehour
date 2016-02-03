@@ -36,6 +36,7 @@ public class ReportData implements Serializable {
     private List<Date> lockedDays;
     private List<? extends ReportElement> reportElements;
     private DateRange reportRange;
+    private int totalReportColumns;
     private final UserSelectedCriteria criteria;
     private final ReportCriteria reportCriteria;
 
@@ -49,6 +50,7 @@ public class ReportData implements Serializable {
         this.reportRange = reportRange;
         this.criteria = criteria;
         this.reportCriteria = new ReportCriteria(criteria);
+        this.totalReportColumns = 0;
     }
 
     public boolean isEmpty() {
@@ -74,5 +76,13 @@ public class ReportData implements Serializable {
 
     public ReportCriteria getReportCriteria() {
         return reportCriteria;
+    }
+
+    public int getTotalReportColumns() {
+        return totalReportColumns;
+    }
+
+    public void setTotalReportColumns(int totalReportColumns) {
+        this.totalReportColumns = totalReportColumns;
     }
 }

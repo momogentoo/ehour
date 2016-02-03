@@ -29,13 +29,11 @@ public class EntrySelectorExcelGenerator {
 
                 EntrySelectorData.Header header = entrySelectorData.getColumnHeaders().get(columnIndex);
 
-                Serializable rawCellValue = cells.get(columnIndex);
+                String cellValue = (String)cells.get(columnIndex);
 
-                if (rawCellValue != null) {
-                    String cellValue = rawCellValue.toString().replaceAll("&infin;", "infinite");
+                EntrySelectorData.ColumnType columnType = header.getColumnType();
 
-                    EntrySelectorData.ColumnType columnType = header.getColumnType();
-
+                if (cellValue != null) {
                     if (columnType == EntrySelectorData.ColumnType.NUMERIC) {
                         cell.setCellValue(Float.parseFloat(cellValue));
                     } else {

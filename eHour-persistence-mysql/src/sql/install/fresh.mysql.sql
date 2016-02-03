@@ -132,7 +132,7 @@ UNLOCK TABLES;
 -- Table structure for table USERS
 --
 
-CREATE TABLE USERS (
+CREATE TABLE IF NOT EXISTS `USERS` (
   USER_ID    INT(11)      NOT NULL AUTO_INCREMENT,
   USERNAME   VARCHAR(64)  NOT NULL,
   PASSWORD   VARCHAR(128) NOT NULL,
@@ -142,14 +142,16 @@ CREATE TABLE USERS (
   EMAIL      VARCHAR(128)          DEFAULT NULL,
   SALT       INT(11)               DEFAULT NULL,
   ACTIVE     CHAR(1)      NOT NULL DEFAULT 'Y',
+  `COUNTRY` VARCHAR(3) NOT NULL DEFAULT 'US',
+  `SEND_REMINDER` CHAR(1) NOT NULL DEFAULT 'Y',
+  `LAST_LOGIN` DATETIME DEFAULT NULL,
+  `LAST_PASSWORD_CHANGE` DATETIME DEFAULT NULL,
   PRIMARY KEY (USER_ID),
   UNIQUE KEY USER_ID (USER_ID),
   UNIQUE KEY USERNAME (USERNAME),
   UNIQUE KEY USERNAME_ACTIVE (USERNAME, ACTIVE),
   KEY IDX_USERNAME_PASSWORD (USERNAME, PASSWORD)
-)
-  ENGINE =InnoDB
-  DEFAULT CHARSET =utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 --
@@ -176,6 +178,54 @@ CREATE TABLE USER_TO_DEPARTMENT (
   DEFAULT CHARSET =utf8;
 
 INSERT INTO USER_TO_DEPARTMENT VALUES (1, 1);
+
+--
+-- Table structure for table `CALENDAR_EXCEPTION`
+--
+
+CREATE TABLE IF NOT EXISTS `CALENDAR_EXCEPTION` (
+  `id` int(11) NOT NULL,
+  `calendar_date` date NOT NULL,
+  `country_code` varchar(3) NOT NULL COMMENT 'US - USA',
+  `exception_type` int(11) NOT NULL DEFAULT '1' COMMENT '1 - non-working day\n2 - working day',
+  `description` varchar(45) DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `CALENDAR_EXCEPTION`
+--
+
+INSERT INTO `CALENDAR_EXCEPTION` (`id`, `calendar_date`, `country_code`, `exception_type`, `description`) VALUES
+(1, '2016-01-01', 'US', 1, 'New Year''s Day'),
+(2, '2016-01-18', 'US', 1, 'Martin Luther King Day'),
+(3, '2016-02-15', 'US', 1, 'President’s Day'),
+(4, '2016-05-30', 'US', 1, 'Memorial Day'),
+(5, '2016-07-04', 'US', 1, 'Independence Day'),
+(6, '2016-09-05', 'US', 1, 'Labor Day'),
+(7, '2016-11-24', 'US', 1, 'Thanksgiving Day'),
+(8, '2016-11-25', 'US', 1, 'Thanksgiving Day'),
+(9, '2016-12-23', 'US', 1, 'Christmas Eve');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `CALENDAR_EXCEPTION`
+--
+ALTER TABLE `CALENDAR_EXCEPTION`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `unique_holiday_index` (`calendar_date`,`country_code`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `CALENDAR_EXCEPTION`
+--
+ALTER TABLE `CALENDAR_EXCEPTION`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=10;
 
 --
 -- Table structure for table MAIL_LOG

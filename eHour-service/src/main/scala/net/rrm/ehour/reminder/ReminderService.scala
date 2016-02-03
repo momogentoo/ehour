@@ -143,13 +143,16 @@ class IFindUsersWithoutSufficientHours @Autowired()(userService: UserService,
 
     val activeUsers = userService.getUsers(UserRole.USER).toList
 
+    // Add first filter - remove users who have no send_reminder set
     activeUsers.filter(u => {
+      u.isSendReminderEnabled
+    }).filter(u => { // Dates coverage filtering
       val assignments = projectAssignmentService.getProjectAssignmentsForUser(u.getUserId, new DateRange(reminderStartDate.toDate, reminderEndDate.toDate))
 
       val assignmentDates = assignments.toList.map(a => {
         val s = if (a.getDateStart == null) reminderStartDate else new LocalDate(a.getDateStart)
         val e = if (a.getDateEnd == null) reminderEndDate else new LocalDate(a.getDateEnd)
-        (s,e)
+        (s, e)
       })
       coversReminderDays(assignmentDates)
     })

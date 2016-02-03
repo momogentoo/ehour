@@ -95,7 +95,7 @@ public abstract class AbstractTabbedManagePage<T extends AdminBackingBean> exten
     /**
      * @return the tabbedPanel
      */
-    public final AddEditTabbedPanel<T> getTabbedPanel() {
+    public AddEditTabbedPanel<T> getTabbedPanel() {
         return tabbedPanel;
     }
 

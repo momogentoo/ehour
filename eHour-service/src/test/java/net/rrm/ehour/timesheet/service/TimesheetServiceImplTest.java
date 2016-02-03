@@ -85,13 +85,13 @@ public class TimesheetServiceImplTest {
         when(timesheetDAO.getBookedHoursperDayInRange(1, DateUtil.calendarToMonthRange(cal))).thenReturn(Arrays.asList(dayA, dayB));
         when(config.getCompleteDayHours()).thenReturn(8f);
 
-        List<LocalDate> results = timesheetService.getBookedDaysMonthOverview(1, cal);
+        List<LocalDate>[] results = timesheetService.getBookedDaysMonthOverview(1, cal);
 
         verify(timesheetDAO).getBookedHoursperDayInRange(1, DateUtil.calendarToMonthRange(cal));
         verify(config, times(2)).getCompleteDayHours();
 
-        assertEquals(1, results.size());
-        assertEquals(2, results.get(0).getDayOfMonth());
+        assertEquals(1, results[0].size());
+        assertEquals(2, results[0].get(0).getDayOfMonth());
     }
 
     @Test

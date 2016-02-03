@@ -16,6 +16,8 @@
 
 package net.rrm.ehour.ui.timesheet.panel;
 
+import net.rrm.ehour.calendar.service.CalendarService;
+import net.rrm.ehour.domain.CalendarException;
 import net.rrm.ehour.domain.User;
 import net.rrm.ehour.timesheet.dto.TimesheetOverview;
 import net.rrm.ehour.timesheet.service.IOverviewTimesheet;
@@ -26,8 +28,11 @@ import org.apache.wicket.markup.html.IHeaderContributor;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.request.resource.CssResourceReference;
 import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.joda.time.LocalDate;
 
 import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Container for month + project overview
@@ -38,6 +43,9 @@ public class OverviewPanel extends Panel implements IHeaderContributor {
 
     @SpringBean
     private IOverviewTimesheet overviewTimesheet;
+
+    @SpringBean
+    private CalendarService calendarService;
 
     public OverviewPanel(String id) {
         super(id);
@@ -52,8 +60,12 @@ public class OverviewPanel extends Panel implements IHeaderContributor {
 
         TimesheetOverview timesheetOverview = overviewTimesheet.getTimesheetOverview(user, overviewFor);
 
+        // Load all calendar exceptions
+        List<CalendarException> calendarExceptions = calendarService.getCalendarExceptions();
+        final Map<LocalDate, Map<String, CalendarException>> processedCalendarException = calendarService.prepMultiCountryCalendarExceptions(calendarExceptions);
+
         add(new ProjectOverviewPanel("projectOverview", overviewFor, timesheetOverview.getProjectStatus()));
-        add(new MonthOverviewPanel("monthOverview", timesheetOverview, overviewFor));
+        add(new MonthOverviewPanel("monthOverview", timesheetOverview, overviewFor, processedCalendarException, user));
     }
 
     @Override

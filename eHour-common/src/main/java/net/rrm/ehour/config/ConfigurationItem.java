@@ -13,6 +13,7 @@ public enum ConfigurationItem {
     MAIL_SMTP_USERNAME("smtpUsername"),
     MAIL_SMTP_PASSWORD("smtpPassword"),
     MAIL_SMTP_PORT("smtpPort"),
+    MAIL_SMTP_STARTTLS("smtpSTARTTLS"),
     DEMO_MODE("demoMode"),
     INITIALIZED("initialized"),
     FIRST_DAY_OF_WEEK("firstDayOfWeek"),

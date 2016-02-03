@@ -42,6 +42,7 @@ import net.rrm.ehour.ui.report.page.ReportPage;
 import net.rrm.ehour.ui.timesheet.export.TimesheetExportPage;
 import net.rrm.ehour.ui.timesheet.page.MonthOverviewPage;
 import net.rrm.ehour.ui.userprefs.page.UserPreferencePage;
+import net.rrm.ehour.util.CommitHash;
 import org.apache.log4j.Logger;
 import org.apache.wicket.*;
 import org.apache.wicket.authorization.IAuthorizationStrategy;
@@ -85,6 +86,9 @@ public class EhourWebApplication extends AuthenticatedWebApplication {
     private String build;
     private IAuthorizationStrategy authorizationStrategy;
 
+    // Short Git commit Hash string
+    private String shortCommitHash;
+
     @Override
     public void init() {
         if (!initialized) {
@@ -106,6 +110,9 @@ public class EhourWebApplication extends AuthenticatedWebApplication {
 
             cacheStrategy();
 
+
+            setShortCommitHash(CommitHash.getShortCommitHash());
+
             initialized = true;
         }
 
@@ -116,7 +123,7 @@ public class EhourWebApplication extends AuthenticatedWebApplication {
         }
 
         if (version != null) { // dont spoil the log during junit tests
-            LOGGER.info(String.format("*** %s version %s started!", getAppName(), version));
+            LOGGER.info(String.format("*** %s version %s started!", getAppName(), getVersion()));
         }
     }
 
@@ -309,7 +316,7 @@ public class EhourWebApplication extends AuthenticatedWebApplication {
      * @return the version
      */
     public String getVersion() {
-        return version;
+        return version + "-" + getShortCommitHash();
     }
 
     /**
@@ -329,6 +336,14 @@ public class EhourWebApplication extends AuthenticatedWebApplication {
 
     public String getBuild() {
         return build;
+    }
+
+    public String getShortCommitHash() {
+        return shortCommitHash;
+    }
+
+    public void setShortCommitHash(String shortCommitHash) {
+        this.shortCommitHash = shortCommitHash;
     }
 
     public Boolean isBookWholeWeekEnabled() {

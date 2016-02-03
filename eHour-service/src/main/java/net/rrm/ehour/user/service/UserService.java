@@ -42,6 +42,14 @@ public interface UserService {
 
     User persistEditedUser(User user) throws ObjectNotUniqueException;
 
+    /**
+     * Only update timestamp changes
+     * @param user
+     * @return
+     * @throws ObjectNotFoundException
+     */
+    User persistUserLastLoginTime(User user) throws ObjectNotFoundException;
+
     void persistNewUser(User user, String password) throws ObjectNotUniqueException;
 
     void changePassword(String username, String newUnencryptedPassword);

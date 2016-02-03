@@ -16,6 +16,7 @@
 
 package net.rrm.ehour.timesheet.service;
 
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import net.rrm.ehour.config.EhourConfig;
 import net.rrm.ehour.data.DateRange;
@@ -78,6 +79,7 @@ public class TimesheetServiceImpl implements IOverviewTimesheet {
      * Fetch the timesheet overview for a user. This returns an object containing the project assignments for the
      * requested month and a list with all timesheet entries for that month.
      *
+     * @param userId
      * @param requestedMonth only the month and year of the calendar is used
      * @return TimesheetOverviewAction
      * @throws ObjectNotFoundException
@@ -105,8 +107,8 @@ public class TimesheetServiceImpl implements IOverviewTimesheet {
      */
     private SortedSet<UserProjectStatus> getProjectStatus(Integer userId, DateRange monthRange) {
         List<Integer> assignmentIds = Lists.newArrayList();
-        SortedSet<UserProjectStatus> userProjectStatus = new TreeSet<>();
-        Map<Integer, AssignmentAggregateReportElement> originalAggregates = new HashMap<>();
+        SortedSet<UserProjectStatus> userProjectStatus = new TreeSet<UserProjectStatus>();
+        Map<Integer, AssignmentAggregateReportElement> originalAggregates = new HashMap<Integer, AssignmentAggregateReportElement>();
 
         List<AssignmentAggregateReportElement> aggregates = aggregateReportService.getHoursPerAssignmentInRange(userId, monthRange);
 
@@ -138,27 +140,40 @@ public class TimesheetServiceImpl implements IOverviewTimesheet {
     /**
      * Get a list with all day numbers in this month that has complete booked days (config defines the completion
      * level).
-     *2
+     *
      * @param userId
      * @param requestedMonth
      * @return List with Integers of complete booked days
      */
-    public List<LocalDate> getBookedDaysMonthOverview(Integer userId, Calendar requestedMonth) {
+    public List<LocalDate>[] getBookedDaysMonthOverview(Integer userId, Calendar requestedMonth) {
+        List<LocalDate>[] dateLists = new List[2];
         DateRange monthRange = DateUtil.calendarToMonthRange(requestedMonth);
 
         List<BookedDay> bookedDays = timesheetDAO.getBookedHoursperDayInRange(userId, monthRange);
-        List<LocalDate> fullyBookedDays = new ArrayList<>();
+        List<LocalDate> fullyBookedDays = new ArrayList<LocalDate>();
+        List<LocalDate> overBookedDays = new ArrayList<LocalDate>();
 
         for (BookedDay bookedDay : bookedDays) {
-            if (bookedDay.getHours() != null &&
-                    bookedDay.getHours().floatValue() >= configuration.getCompleteDayHours()) {
-                fullyBookedDays.add(new LocalDate(bookedDay.getDate()));
+            if (bookedDay.getHours() != null) {
+
+                // Overbooked day is still a booked day so keep in this list
+                if (bookedDay.getHours().floatValue() >= configuration.getCompleteDayHours()) {
+                    fullyBookedDays.add(new LocalDate(bookedDay.getDate()));
+                }
+
+                if (bookedDay.getHours().floatValue() > configuration.getCompleteDayHours()) {
+                    overBookedDays.add(new LocalDate(bookedDay.getDate()));
+                }
             }
         }
 
         Collections.sort(fullyBookedDays);
+        Collections.sort(overBookedDays);
 
-        return fullyBookedDays;
+        dateLists[0] = fullyBookedDays;
+        dateLists[1] = overBookedDays;
+
+        return dateLists;
     }
 
     /**
@@ -174,7 +189,7 @@ public class TimesheetServiceImpl implements IOverviewTimesheet {
         Integer dayKey;
         List<TimesheetEntry> dayEntries;
 
-        calendarMap = new HashMap<>();
+        calendarMap = new HashMap<Integer, List<TimesheetEntry>>();
 
         for (TimesheetEntry entry : timesheetEntries) {
             if (entry == null) {
@@ -189,7 +204,7 @@ public class TimesheetServiceImpl implements IOverviewTimesheet {
             if (calendarMap.containsKey(dayKey)) {
                 dayEntries = calendarMap.get(dayKey);
             } else {
-                dayEntries = new ArrayList<>();
+                dayEntries = new ArrayList<TimesheetEntry>();
             }
 
             dayEntries.add(entry);

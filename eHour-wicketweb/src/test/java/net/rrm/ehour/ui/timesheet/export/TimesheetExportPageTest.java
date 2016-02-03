@@ -65,7 +65,7 @@ public class TimesheetExportPageTest extends BaseSpringWebAppTester
 
         reportCriteria = createReportCriteria();
 
-        when(overviewTimesheet.getBookedDaysMonthOverview(any(Integer.class), any(Calendar.class))).thenReturn(new ArrayList<LocalDate>());
+        when(overviewTimesheet.getBookedDaysMonthOverview(any(Integer.class), any(Calendar.class))[0]).thenReturn(new ArrayList<LocalDate>());
 
         when(reportCriteriaService.syncUserReportCriteria(any(ReportCriteria.class), any(ReportCriteriaUpdateType.class)))
                 .thenReturn(reportCriteria);

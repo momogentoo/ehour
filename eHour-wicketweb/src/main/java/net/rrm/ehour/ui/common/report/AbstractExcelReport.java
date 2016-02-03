@@ -20,9 +20,12 @@ import net.rrm.ehour.report.criteria.ReportCriteria;
 import net.rrm.ehour.ui.common.report.excel.CellFactory;
 import net.rrm.ehour.ui.common.report.excel.ExcelStyle;
 import net.rrm.ehour.ui.common.report.excel.ExcelWorkbook;
+import net.rrm.ehour.ui.report.matrix.DetailedMatrixReportModel;
 import net.rrm.ehour.ui.report.model.TreeReportElement;
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
 import org.apache.wicket.model.IModel;
@@ -31,6 +34,8 @@ import org.apache.wicket.model.ResourceModel;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,18 +43,26 @@ import java.util.List;
  */
 public abstract class AbstractExcelReport implements ExcelReport {
     private static final long serialVersionUID = 1L;
+    protected static final Logger logger = Logger.getLogger(AbstractExcelReport.class);
 
     private ReportConfig reportConfig;
     private IModel<ReportCriteria> reportCriteriaModel;
 
+    /**
+     * Store current Report Data Model
+     */
+    protected Report report;
+
     public AbstractExcelReport(ReportConfig reportConfig, IModel<ReportCriteria> reportCriteriaModel) {
         this.reportConfig = reportConfig;
         this.reportCriteriaModel = reportCriteriaModel;
+        this.report = null;
     }
 
     @Override
     public void write(OutputStream stream) throws IOException {
-        ExcelWorkbook workbook = createWorkbook(createReport(reportCriteriaModel.getObject()));
+        report = createReport(reportCriteriaModel.getObject());
+        ExcelWorkbook workbook = createWorkbook(report);
         workbook.write(stream);
    }
 
@@ -59,25 +72,33 @@ public abstract class AbstractExcelReport implements ExcelReport {
      * Create the workbook
      */
     protected ExcelWorkbook createWorkbook(Report treeReport) {
+        ReportColumn []effectiveColumns = treeReport.getReportColumns();
         ExcelWorkbook wb = new ExcelWorkbook();
 
         Sheet sheet = wb.createSheet(WorkbookUtil.createSafeSheetName(getExcelReportName().getObject()));
         int rowNumber = 0;
-        short column;
 
-        for (column = 0; column < 4; column++) {
-            sheet.setColumnWidth(column, 5000);
-        }
+        // Adjust column width of worksheet
+        adjustColumnWidth(sheet, effectiveColumns);
 
-        for (; column < 7; column++) {
-            sheet.setColumnWidth(column, 3000);
+        // Report does not provide columns, use static config
+        if (effectiveColumns == null) {
+            effectiveColumns = reportConfig.getReportColumns();
+            logger.info("Using configured static report columns");
         }
 
         rowNumber = createHeaders(rowNumber, sheet, treeReport, wb);
 
-        rowNumber = addColumnHeaders(rowNumber, sheet, wb);
+        rowNumber = addColumnHeaders(rowNumber, sheet, wb, effectiveColumns);
 
-        fillReportSheet(treeReport, sheet, rowNumber, wb);
+        rowNumber = fillReportSheet(treeReport, sheet, rowNumber, wb, effectiveColumns);
+
+        appendFootage(sheet, rowNumber, wb);
+
+        /**
+         * Check and Add additional sheets for specific report templates
+         */
+        createAdditionalSheets(wb);
 
         return wb;
     }
@@ -86,44 +107,80 @@ public abstract class AbstractExcelReport implements ExcelReport {
 
     protected abstract IModel<String> getHeaderReportName();
 
-    private int addColumnHeaders(int rowNumber, Sheet sheet, ExcelWorkbook workbook) {
+    private int addColumnHeaders(int rowNumber, Sheet sheet, ExcelWorkbook workbook, ReportColumn[] columnHeaders) {
         int cellNumber = 0;
         IModel<String> headerModel;
 
         Row row = sheet.createRow(rowNumber++);
 
-        for (ReportColumn reportColumn : reportConfig.getReportColumns()) {
+        for (ReportColumn reportColumn : columnHeaders) {
             if (reportColumn.isVisible()) {
-                headerModel = new ResourceModel(reportColumn.getColumnHeaderResourceKey());
+                logger.debug("Adding column header: " + reportColumn.getDefaultColumnName());
+                headerModel = new ResourceModel(reportColumn.getColumnHeaderResourceKey(), reportColumn.getDefaultColumnName());
 
-                CellFactory.createCell(row, cellNumber++, headerModel, workbook, ExcelStyle.HEADER);
+                CellFactory.createCell(row, cellNumber++, headerModel, workbook,
+                        (reportColumn.getOverrideExcelStyle() == null) ? ExcelStyle.HEADER : reportColumn.getOverrideExcelStyle());
             }
         }
 
         return rowNumber;
     }
 
-    @SuppressWarnings("unchecked")
-    protected void fillReportSheet(Report reportData, Sheet sheet, int rowNumber, ExcelWorkbook workbook) {
-        List<TreeReportElement> matrix = (List<TreeReportElement>) reportData.getReportData().getReportElements();
-        ReportColumn[] columnHeaders = reportConfig.getReportColumns();
+    protected int appendFootage(Sheet sheet, int rowNumber, ExcelWorkbook workbook) {
         Row row;
+        Date now = Calendar.getInstance().getTime();
+
+        // Add a blank line
+        row = sheet.createRow(rowNumber++);
+
+        // Add generated time
+        row = sheet.createRow(rowNumber++);
+        String reportGenerateTime = "Report Generation Time: " + now;
+
+        CellFactory.createCell(row, 0, reportGenerateTime, workbook, ExcelStyle.NORMAL_FONT);
+
+        sheet.addMergedRegion(new CellRangeAddress(rowNumber - 1, rowNumber - 1, 0, 3));
+
+        return rowNumber;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected int fillReportSheet(Report reportData, Sheet sheet, int rowNumber, ExcelWorkbook workbook, ReportColumn[] columnHeaders) {
+        List<TreeReportElement> matrix = (List<TreeReportElement>) reportData.getReportData().getReportElements();
+        Row row;
+        TreeReportElement lastElement = null;
 
         for (TreeReportElement element : matrix) {
             row = sheet.createRow(rowNumber++);
 
-            addColumns(workbook, columnHeaders, row, element);
+            addColumns(workbook, columnHeaders, row, element, lastElement);
+
+            lastElement = element;
         }
+
+        return rowNumber;
     }
 
-    private void addColumns(ExcelWorkbook workbook, ReportColumn[] columnHeaders, Row row, TreeReportElement element) {
+    private void addColumns(ExcelWorkbook workbook,
+                            ReportColumn[] columnHeaders,
+                            Row row,
+                            TreeReportElement element,
+                            TreeReportElement lastElement) {
         int i = 0;
         int cellNumber = 0;
 
         // add cells for a row
         for (Serializable cellValue : element.getRow()) {
             if (columnHeaders[i].isVisible()) {
+                // Skip duplicate value
                 if (cellValue != null) {
+                    if (lastElement != null) {
+                        Serializable lastElementCellValue = lastElement.getRow()[i];
+                        if (!columnHeaders[i].isAllowDuplicates() && lastElementCellValue != null && lastElementCellValue.equals(cellValue)) {
+                            cellValue = "";
+                        }
+                    }
+
                     switch (columnHeaders[i].getColumnType()) {
                         case HOUR:
                             CellFactory.createCell(row, cellNumber++, cellValue, workbook, ExcelStyle.DIGIT);
@@ -154,6 +211,43 @@ public abstract class AbstractExcelReport implements ExcelReport {
     }
 
 
+    /**
+     * Adjust Excel Sheet Column Width
+     * <br/>
+     * May be overridden
+     *
+     * @param sheet
+     * @param effectiveColumns
+     *
+     * @return
+     */
+    protected Sheet adjustColumnWidth(Sheet sheet, ReportColumn []effectiveColumns) {
+        /**
+         * This style applies to most of static-column reports
+         */
+        short column;
+        for (column = 0; column < 4; column++) {
+            sheet.setColumnWidth(column, 5000);
+        }
+
+        for (; column < 7; column++) {
+            sheet.setColumnWidth(column, 3000);
+        }
+
+        return sheet;
+    }
+
+    /**
+     * Create Excel Summary Sheet Headers
+     *
+     * May be overridden
+     *
+     * @param rowNumber
+     * @param sheet
+     * @param report
+     * @param workbook
+     * @return
+     */
     protected int createHeaders(int rowNumber, Sheet sheet, Report report, ExcelWorkbook workbook) {
         Row row = sheet.createRow(rowNumber++);
         CellFactory.createCell(row, 0, getHeaderReportName(), workbook, ExcelStyle.BOLD_FONT);
@@ -180,5 +274,16 @@ public abstract class AbstractExcelReport implements ExcelReport {
         rowNumber++;
 
         return rowNumber;
+    }
+
+    /**
+     * Create additional sheets in current ExcelWorkbook
+     *
+     * @param wb
+     * @return
+     */
+    protected ExcelWorkbook createAdditionalSheets(ExcelWorkbook wb) {
+        // Do nothing for most of report templates
+        return wb;
     }
 }

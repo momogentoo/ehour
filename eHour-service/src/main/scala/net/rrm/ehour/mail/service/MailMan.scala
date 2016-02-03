@@ -103,6 +103,8 @@ class MailManSmtpImpl extends MailMan {
       if (StringUtils.isNotBlank(config.getSmtpUsername) && StringUtils.isNotBlank(config.getSmtpPassword)) {
         val prop = new Properties
         prop.put("mail.smtp.auth", "true")
+        //prop.put("mail.smtp.starttls.enable", if (config.enableSMTPSTARTTLS) "true" else "false")
+        prop.put("mail.smtp.starttls.enable", "true")
 
         mailSender.setJavaMailProperties(prop)
         mailSender.setUsername(config.getSmtpUsername)

@@ -58,6 +58,11 @@ Limitation
 Building from Source
 ------------
  - See BUILD.md
+ 
+
+Prebuilt WAR Package
+------------
+Need a prebuilt WAR Package? Please create a request in Issues. Thank you.
 
    
 ***More Details to be entered***

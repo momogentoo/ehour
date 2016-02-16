@@ -91,7 +91,7 @@ public class User extends DomainObject<Integer, User> {
 
     @ManyToMany(targetEntity = UserRole.class,
             cascade = {CascadeType.MERGE, CascadeType.PERSIST}
-            )
+    )
     @JoinTable(name = "USER_TO_USERROLE",
             joinColumns = @JoinColumn(name = "USER_ID"),
             inverseJoinColumns = @JoinColumn(name = "ROLE"))
@@ -367,8 +367,8 @@ public class User extends DomainObject<Integer, User> {
                 .append(this.getFirstName(), object.getFirstName())
                 .append(this.getUserId(), object.getUserId())
                 .append(this.getCountry(), object.getCountry())
-                .append(this.getLastLoginTime(), object.getLastLoginTime())
-                .append(this.getLastPasswordChangeTime(), object.getLastPasswordChangeTime())
+//                .append(this.getLastLoginTime(), object.getLastLoginTime())
+//                .append(this.getLastPasswordChangeTime(), object.getLastPasswordChangeTime())
                 .toComparison();
     }
 
@@ -429,8 +429,8 @@ public class User extends DomainObject<Integer, User> {
                 .append(active, castOther.active)
                 .append(country, castOther.country)
                 .append(sendReminder, castOther.sendReminder)
-                .append(lastLoginTime, castOther.lastLoginTime)
-                .append(lastPasswordChangeTime, castOther.lastPasswordChangeTime)
+//                .append(lastLoginTime, castOther.lastLoginTime)
+//                .append(lastPasswordChangeTime, castOther.lastPasswordChangeTime)
                 .isEquals();
     }
 
@@ -442,7 +442,8 @@ public class User extends DomainObject<Integer, User> {
                 .append(active)
                 .append(country)
                 .append(sendReminder)
-                .append(lastLoginTime)
-                .append(lastPasswordChangeTime).toHashCode();
+//                .append(lastLoginTime)
+//                .append(lastPasswordChangeTime)
+                .toHashCode();
     }
 }

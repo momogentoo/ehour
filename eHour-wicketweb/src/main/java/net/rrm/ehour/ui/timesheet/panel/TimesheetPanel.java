@@ -327,7 +327,8 @@ public class TimesheetPanel extends AbstractBasePanel<TimesheetContainer> {
 
     @SuppressWarnings("unchecked")
     private List<ProjectAssignmentStatus> persistTimesheetEntries() {
-        return ((PersistableTimesheetModel) getPanelModel()).persist();
+//        return ((PersistableTimesheetModel) getPanelModel()).persist();
+        return model.persist();
     }
 
     private Form<TimesheetContainer> buildForm(IModel<TimesheetContainer> timesheetModel) {

@@ -41,6 +41,7 @@ Highlights of Changes
 
  - Several Other Changes   
    -- Modified parent pom.xml will make download of most of dependencies directly from official Maven repository. Only 1 charting module will still download from original author's repository.
+
    -- Fix an interal error on weekly timesheet panel, caused by saving timesheet entries in a different persistence context that used for querying. (org.hibernate.NonUniqueObjectException exception)
 
 

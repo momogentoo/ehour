@@ -38,6 +38,7 @@ import org.apache.wicket.authroles.authentication.AuthenticatedWebSession;
 import org.apache.wicket.authroles.authorization.strategies.role.Roles;
 import org.apache.wicket.request.Request;
 import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.springframework.ldap.CommunicationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -211,7 +212,10 @@ public class EhourWebSession extends AuthenticatedWebSession {
             LOGGER.info("Could not authenticate a user", e);
             setAuthentication(null);
             throw e;
-
+        } catch (CommunicationException e) {
+            LOGGER.info("Failed to contact LDAP/Active Directory for user '" + username + "': " + e.getMessage());
+            setAuthentication(null);
+            return false;
         } catch (RuntimeException e) {
             LOGGER.info("Unexpected exception while authenticating a user", e);
             setAuthentication(null);

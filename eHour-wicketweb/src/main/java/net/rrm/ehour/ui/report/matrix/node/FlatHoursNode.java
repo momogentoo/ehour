@@ -21,9 +21,11 @@ import net.rrm.ehour.ui.report.matrix.DetailedMatrixReportElement;
 import net.rrm.ehour.ui.report.model.ReportNode;
 import net.rrm.ehour.ui.report.matrix.DailyUnit;
 import net.rrm.ehour.util.DateUtil;
+import net.rrm.ehour.util.JodaDateUtil;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -64,7 +66,8 @@ public class FlatHoursNode extends ReportNode {
         int totalDays = daysBetweenDates(startDate, endDate);
         logger.debug("Start Date: " + startDate
                 + " End Date: " + endDate
-                + " Total Days " + totalDays
+                + " Total Days: " + totalDays
+                + " Project Code: " + element.getProjectCode()
                 + " UserName: " + element.getUserName()
                 + " Total Hours: " + element.getTotalHours()
         );
@@ -74,13 +77,20 @@ public class FlatHoursNode extends ReportNode {
         List<DailyUnit> dailyUnits = element.getDailyProjectElements();
         boolean emptyDailyUnits = (dailyUnits == null);
 
+        if (!emptyDailyUnits) {
+            for (DailyUnit du : dailyUnits) {
+                logger.debug(du.toString());
+            }
+        }
+
         int i, j = 0;
         Date currentDate = new Date(startDate.getTime());
         for (i = 0; i < totalDays; ++i) {
             if (!emptyDailyUnits) {
                 DailyUnit currentDailyUnit = dailyUnits.get(j);
                 logger.debug("Current Date: " + currentDate
-                    + " Daily Unit Date: " + currentDailyUnit.getDate());
+                    + " Daily Unit Date: " + currentDailyUnit.getDate()
+                    + "Hours: " + currentDailyUnit.getHours());
 
                 if (currentDate.before(currentDailyUnit.getDate()) || currentDate.after(currentDailyUnit.getDate())) {
                     this.columnValues[i] = element.isShowZeroHours() ? 0.0 : "";
@@ -96,7 +106,10 @@ public class FlatHoursNode extends ReportNode {
                 this.columnValues[i] = "";
             }
             // Current date slot + 1
-            currentDate.setTime(currentDate.getTime() + 24 * 3600000);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(currentDate);
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+            currentDate = calendar.getTime();
         }
 
         // Append sub-total of this user in this project

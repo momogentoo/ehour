@@ -394,7 +394,8 @@ public class DetailedMatrixReportModel extends TreeReportModel {
 //                    if (DateUtil.isWeekend(calDate)) {
 //                        reportColumns[i].setOverrideExcelStyle(ExcelStyle.WEEKEND_FONT);
 //                    }
-                    startDate.setTime(startDate.getTime() + 24 * 3600000);
+                    calDate.add(Calendar.DAY_OF_YEAR, 1);
+                    startDate = calDate.getTime();
                     break;
             }
         }

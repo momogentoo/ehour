@@ -9,6 +9,7 @@ This repository is a fork based on the [original author](https://github.com/te-c
 
 New Issues/Requests are always welcome.
 
+This project is ***active and maintained***
 
 License
 -------------
